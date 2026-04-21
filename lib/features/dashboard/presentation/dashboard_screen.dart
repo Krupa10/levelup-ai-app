@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:level_up_ai/features/dashboard/presentation/chat_screen.dart';
 import 'package:level_up_ai/features/dashboard/presentation/home_screen.dart';
+import 'package:level_up_ai/features/dashboard/presentation/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,9 +16,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    const Center(child: Text("Chat")),
+    ChatScreen(),
     const Center(child: Text("Tasks")),
-    const Center(child: Text("Profile")),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
