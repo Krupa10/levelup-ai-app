@@ -3,8 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
+  final Function(List<Map<String, dynamic>>) onTasksUpdated;
 
-  const HomeScreen({super.key, required this.onStreakUpdated});
+  const HomeScreen({super.key, required this.onStreakUpdated, required this.onTasksUpdated,});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -86,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           };
         });
       });
+      widget.onTasksUpdated(todayPlan);
     }
   }
 
@@ -160,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     todayCompleted = false;
                   });
 
+                  widget.onTasksUpdated(todayPlan);
                   savePlan();
                   goalController.clear();
                 },
@@ -209,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 }
                                 savePlan();
                               });
+                              widget.onTasksUpdated(todayPlan);
                             },
                             //checkbox
                             child: AnimatedContainer(

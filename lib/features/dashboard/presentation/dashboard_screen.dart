@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:level_up_ai/features/dashboard/presentation/chat_screen.dart';
 import 'package:level_up_ai/features/dashboard/presentation/home_screen.dart';
 import 'package:level_up_ai/features/dashboard/presentation/profile_screen.dart';
+import 'package:level_up_ai/features/dashboard/presentation/tasks_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,6 +14,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int streak = 0;
   int _selectedIndex = 0;
+  List<Map<String, dynamic>> tasks = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -30,9 +32,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             streak = value;
           });
         },
+        onTasksUpdated: (updatedTasks) {
+          setState(() {
+            tasks = updatedTasks;
+          });
+        },
       ),
+
       const ChatScreen(),
-      const Center(child: Text("Tasks")),
+      TasksScreen(
+        tasks: tasks,
+        onToggle: (index) {
+          setState(() {
+            tasks[index]["done"] = !tasks[index]["done"];
+          });
+        },
+      ),
       ProfileScreen(streak: streak),
     ];
 
