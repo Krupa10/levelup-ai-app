@@ -1,75 +1,95 @@
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final int streak;
+
+  const ProfileScreen({super.key, required this.streak});
+
+  String getConsistencyText() {
+    if (streak == 0) return "Start your journey 💪";
+    if (streak < 3) return "Good start 👍";
+    if (streak < 7) return "Improving 🚀";
+    return "On fire 🔥";
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Profile")),
+      appBar: AppBar(title: const Text("Profile")),
       body: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            //user info
-            Row(
-              children: [
-                CircleAvatar(radius: 30, child: Icon(Icons.person, size: 30)),
-                SizedBox(width: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Your Name",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // user info
+              Row(
+                children: const [
+                  CircleAvatar(
+                    radius: 30,
+                    child: Icon(Icons.person, size: 30),
+                  ),
+                  SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Your Name",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text("Flutter Developer"),
-                    Text("Target: 20 LPA Job"),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 30),
+                      Text("Flutter Developer"),
+                      Text("Target: Product-based company"),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
 
-            //streak progress
-            Text(
-              "🔥 Current Streak: 3 days",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
+              // streak
+              Text(
+                "🔥 Current Streak: $streak days",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
 
-            Text("Consistency Level: Improving 🚀"),
-            SizedBox(height: 30),
+              Text(getConsistencyText()),
+              const SizedBox(height: 30),
 
-            //resume section UI
-            Text(
-              "Resume",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
+              // resume
+              const Text(
+                "Resume",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
 
-            ElevatedButton(onPressed: () {}, child: Text("Upload Resume")),
-            SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {},
+                child: const Text("Upload Resume"),
+              ),
+              const SizedBox(height: 20),
 
-            //setting section
-            Text(
-              "Settings",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
+              // settings
+              const Text(
+                "Settings",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
 
-            ListTile(
-              leading: Icon(Icons.dark_mode),
-              title: Text("Dark Mode"),
-              trailing: Switch(value: false, onChanged: (v) {}),
-            ),
+              ListTile(
+                leading: const Icon(Icons.dark_mode),
+                title: const Text("Dark Mode"),
+                trailing: Switch(value: false, onChanged: (v) {}),
+              ),
 
-            ListTile(leading: Icon(Icons.logout), title: Text("Logout")),
-          ],
+              const ListTile(
+                leading: Icon(Icons.logout),
+                title: Text("Logout"),
+              ),
+            ],
+          ),
         ),
       ),
     );

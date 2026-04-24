@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(int) onStreakUpdated;
+
+  const HomeScreen({super.key, required this.onStreakUpdated});
 
   @override
-  State<HomeScreen> createState() => _HomeScreen();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreen extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> todayPlan = [];
+  TextEditingController goalController = TextEditingController();
+
+  int streak = 0;
+  bool todayCompleted = false;
+
+  // plan generator
   List<Map<String, dynamic>> generatePlan(String goal) {
     goal = goal.toLowerCase();
 
@@ -32,11 +40,7 @@ class _HomeScreen extends State<HomeScreen> {
     }).toList();
   }
 
-  TextEditingController goalController = TextEditingController();
-  int streak = 0;
-  bool completedOnce = false;
-  bool todayCompleted = false;
-
+  // storage
   Future<void> saveStreak() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt("streak", streak);
@@ -47,8 +51,12 @@ class _HomeScreen extends State<HomeScreen> {
     setState(() {
       streak = prefs.getInt("streak") ?? 0;
     });
+
+    // send to dashboard
+    widget.onStreakUpdated(streak);
   }
 
+  // init
   @override
   void initState() {
     super.initState();
@@ -56,107 +64,98 @@ class _HomeScreen extends State<HomeScreen> {
     loadStreak();
   }
 
+  // progress
   double getProgress() {
     if (todayPlan.isEmpty) return 0;
 
     return todayPlan.where((t) => t["done"]).length / todayPlan.length;
   }
 
+  // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: Center(
-          child: Text(
-            "LevelUp AI",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
+        centerTitle: true,
+        title: const Text(
+          "LevelUp AI",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  //streak UI
-                  Text(
-                    "🔥 Streak: $streak days",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  if (streak > 0) Text("Keep going! You're consistent 🚀"),
-                  SizedBox(height: 10),
-                  SizedBox(height: 20),
-                  //progress bar
-                  Text("Today's Progress"),
-                  SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: getProgress(), // dummy
-                  ),
-                  SizedBox(height: 20),
-                  //Ask AI coach button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: Text("Ask AI Coach"),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  //goal input field
-                  TextField(
-                    controller: goalController,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: "Enter your goal (e.g. Flutter job)",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // streak
+            Text(
+              "🔥 Streak: $streak days",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            if (streak > 0) const Text("Keep going! You're consistent 🚀"),
+            const SizedBox(height: 16),
+
+            // progress
+            const Text("Today's Progress"),
+            const SizedBox(height: 6),
+            LinearProgressIndicator(value: getProgress()),
+            const SizedBox(height: 20),
+
+            // goal input
+            TextField(
+              controller: goalController,
+              decoration: InputDecoration(
+                hintText: "Enter your goal (e.g. Flutter job)",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // generate plan
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (goalController.text.trim().isEmpty) return;
+
+                  setState(() {
+                    todayPlan = generatePlan(goalController.text);
+                    todayCompleted = false;
+                  });
+
+                  goalController.clear();
+                },
+                child: const Text("Generate Plan"),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // plan list
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Today's Plan",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  //generate button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (goalController.text.trim().isEmpty) return;
+                    const SizedBox(height: 10),
 
-                        setState(() {
-                          todayPlan = generatePlan(goalController.text);
-                          todayCompleted = false;
-                        });
-
-                        goalController.clear(); // optional
-                      },
-                      child: Text("Generate Plan"),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  //today's plan
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    //plan UI
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Today's Plan",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-
-                        ...todayPlan.map((item) {
+                    Expanded(
+                      child: ListView(
+                        children: todayPlan.map((item) {
                           return GestureDetector(
                             onTap: () {
                               setState(() {
@@ -169,50 +168,77 @@ class _HomeScreen extends State<HomeScreen> {
                                 if (allDoneNow && !todayCompleted) {
                                   streak++;
                                   todayCompleted = true;
+
                                   saveStreak();
+                                  widget.onStreakUpdated(streak);
                                 }
                               });
                             },
-                            child: Container(
-                              margin: EdgeInsets.symmetric(vertical: 6),
-                              padding: EdgeInsets.all(12),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: item["done"]
+                                    ? Colors.grey.shade200
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(
-                                    item["done"]
-                                        ? Icons.check_circle
-                                        : Icons.circle_outlined,
-                                    color: item["done"]
-                                        ? Colors.green
-                                        : Colors.grey,
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    transitionBuilder: (child, animation) {
+                                      return ScaleTransition(
+                                        scale: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    child: Icon(
+                                      item["done"]
+                                          ? Icons.check_circle
+                                          : Icons.circle_outlined,
+                                      key: ValueKey(item["done"]),
+                                      color: item["done"]
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      size: 26,
+                                    ),
                                   ),
-                                  SizedBox(width: 10),
+
+                                  const SizedBox(width: 10),
+
                                   Expanded(
-                                    child: Text(
-                                      item["task"],
+                                    child: AnimatedDefaultTextStyle(
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
                                       style: TextStyle(
                                         decoration: item["done"]
                                             ? TextDecoration.lineThrough
-                                            : null,
+                                            : TextDecoration.none,
+                                        decorationThickness: 2,
+                                        decorationColor: Colors.black,
+                                        color: item["done"]
+                                            ? Colors.black54
+                                            : Colors.black,
+                                        fontWeight: FontWeight.w500,
                                       ),
+                                      child: Text(item["task"]),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           );
-                        }),
-                      ],
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
