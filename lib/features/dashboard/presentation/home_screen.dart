@@ -56,12 +56,46 @@ class _HomeScreenState extends State<HomeScreen> {
     widget.onStreakUpdated(streak);
   }
 
+  //save plan
+  Future<void> savePlan() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> tasks = todayPlan.map((t) => t["task"] as String).toList();
+    List<bool> status = todayPlan.map((t) => t["done"] as bool).toList();
+
+    await prefs.setStringList("tasks", tasks);
+    await prefs.setStringList(
+      "status",
+      status.map((e) => e.toString()).toList(),
+    );
+  }
+
+  //load plan
+  Future<void> loadPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String>? tasks = prefs.getStringList("tasks");
+    List<String>? status = prefs.getStringList("status");
+
+    if (tasks != null && status != null) {
+      setState(() {
+        todayPlan = List.generate(tasks.length, (index) {
+          return {
+            "task": tasks[index],
+            "done": status[index] == "true",
+          };
+        });
+      });
+    }
+  }
+
   // init
   @override
   void initState() {
     super.initState();
     todayPlan = generatePlan("flutter job");
     loadStreak();
+    loadPlan();
   }
 
   // progress
@@ -126,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     todayCompleted = false;
                   });
 
+                  savePlan();
                   goalController.clear();
                 },
                 child: const Text("Generate Plan"),
@@ -172,8 +207,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   saveStreak();
                                   widget.onStreakUpdated(streak);
                                 }
+                                savePlan();
                               });
                             },
+                            //checkbox
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               margin: const EdgeInsets.symmetric(vertical: 6),
