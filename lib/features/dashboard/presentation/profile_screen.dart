@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'history_screen.dart';
+
 class ProfileScreen extends StatelessWidget {
   final int streak;
 
@@ -70,6 +72,19 @@ class ProfileScreen extends StatelessWidget {
                 child: const Text("Upload Resume"),
               ),
               const SizedBox(height: 20),
+
+              //history button
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HistoryScreen(),
+                    ),
+                  );
+                },
+                child: Text("View History"),
+              ),
 
               // settings
               const Text(
