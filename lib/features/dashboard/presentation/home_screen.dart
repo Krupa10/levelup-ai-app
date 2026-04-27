@@ -91,6 +91,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  //save history
+  Future<void> saveHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    String today = DateTime.now().toString().split(' ')[0];
+
+    List<String> completedTasks = todayPlan
+        .where((t) => t["done"])
+        .map((t) => t["task"] as String)
+        .toList();
+
+    await prefs.setStringList(today, completedTasks);
+  }
+
   // init
   @override
   void initState() {
@@ -208,6 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   todayCompleted = true;
 
                                   saveStreak();
+                                  saveHistory();
                                   widget.onStreakUpdated(streak);
                                 }
                                 savePlan();
