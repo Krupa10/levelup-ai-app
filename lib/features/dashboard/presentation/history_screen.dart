@@ -113,7 +113,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         SizedBox(height: 16),
 
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // ✅ FIX spacing
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: dates.map((date) {
             final count = data[date]!;
@@ -128,10 +128,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 // 🔢 VALUE ON TOP
                 Text(
                   count.toString(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
 
                 SizedBox(height: 6),
@@ -143,7 +140,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   width: 14,
                   decoration: BoxDecoration(
                     color: isLatest
-                        ? Colors.deepPurple // highlight latest
+                        ? Colors
+                              .deepPurple // highlight latest
                         : Colors.deepPurple.shade200,
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -156,8 +154,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   date.substring(5),
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight:
-                    isLatest ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isLatest ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],
@@ -168,10 +165,58 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  //generate suggestion
+  List<String> generateInsights() {
+    List<String> insights = [];
+
+    if (history.isEmpty) return insights;
+
+    int totalTasks = 0;
+    int totalDays = history.length;
+
+    history.forEach((date, tasks) {
+      totalTasks += tasks.length;
+    });
+
+    double avgTasks = totalTasks / totalDays;
+
+    // 1-average productivity
+    if (avgTasks >= 3) {
+      insights.add("🔥 You are highly productive! Keep it up!");
+    } else if (avgTasks >= 1) {
+      insights.add("👍 Good consistency. Try increasing task count.");
+    } else {
+      insights.add("🚀 Start small and build consistency.");
+    }
+
+    // 2-best day
+    int maxTasks = 0;
+    String bestDay = "";
+
+    history.forEach((date, tasks) {
+      if (tasks.length > maxTasks) {
+        maxTasks = tasks.length;
+        bestDay = date;
+      }
+    });
+
+    if (bestDay.isNotEmpty) {
+      insights.add("📅 Your best day was $bestDay with $maxTasks tasks!");
+    }
+
+    // 3-consistency check
+    if (totalDays >= 5) {
+      insights.add("💪 You're building a strong habit!");
+    }
+
+    return insights;
+  }
+
   @override
   Widget build(BuildContext context) {
     final dates = history.keys.toList()..sort((a, b) => b.compareTo(a));
     final analytics = calculateAnalytics();
+    final insights = generateInsights();
 
     return Scaffold(
       appBar: AppBar(title: const Text("History")),
@@ -182,6 +227,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  //AI-insights
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "AI Insights 🤖",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      ...insights.map(
+                        (text) => Container(
+                          margin: EdgeInsets.only(bottom: 8),
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(text),
+                        ),
+                      ),
+
+                      SizedBox(height: 20),
+                    ],
+                  ),
                   buildChart(),
                   SizedBox(height: 20),
                   // analytics section
