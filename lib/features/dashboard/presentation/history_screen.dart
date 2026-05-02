@@ -73,19 +73,98 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-          ),
+          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
           SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
+    );
+  }
+
+  //data for chart
+  Map<String, int> getWeeklyData() {
+    Map<String, int> data = {};
+
+    history.forEach((date, tasks) {
+      data[date] = tasks.length;
+    });
+
+    return data;
+  }
+
+  //manual bar chart
+  Widget buildChart() {
+    final data = getWeeklyData();
+    final dates = data.keys.toList()..sort();
+
+    int maxTasks = data.values.isEmpty
+        ? 1
+        : data.values.reduce((a, b) => a > b ? a : b);
+
+    String latestDate = dates.isNotEmpty ? dates.last : "";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Weekly Activity 📅",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 16),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // ✅ FIX spacing
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: dates.map((date) {
+            final count = data[date]!;
+
+            double barHeight = (count / maxTasks) * 100;
+
+            bool isLatest = date == latestDate;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 🔢 VALUE ON TOP
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                SizedBox(height: 6),
+
+                // 📊 BAR
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  height: barHeight == 0 ? 4 : barHeight, // avoid zero height
+                  width: 14,
+                  decoration: BoxDecoration(
+                    color: isLatest
+                        ? Colors.deepPurple // highlight latest
+                        : Colors.deepPurple.shade200,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+
+                SizedBox(height: 6),
+
+                // 📅 DATE LABEL (MM-DD)
+                Text(
+                  date.substring(5),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight:
+                    isLatest ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -103,6 +182,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  buildChart(),
+                  SizedBox(height: 20),
                   // analytics section
                   Text(
                     "Your Analytics 📊",
