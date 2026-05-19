@@ -4,8 +4,15 @@ import 'history_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final int streak;
+  final bool isDarkMode;
+  final Function(bool) onThemeChanged;
 
-  const ProfileScreen({super.key, required this.streak});
+  const ProfileScreen({
+    super.key,
+    required this.streak,
+    required this.isDarkMode,
+    required this.onThemeChanged,
+  });
 
   String getConsistencyText() {
     if (streak == 0) return "Start your journey 💪";
@@ -27,10 +34,7 @@ class ProfileScreen extends StatelessWidget {
               // user info
               Row(
                 children: const [
-                  CircleAvatar(
-                    radius: 30,
-                    child: Icon(Icons.person, size: 30),
-                  ),
+                  CircleAvatar(radius: 30, child: Icon(Icons.person, size: 30)),
                   SizedBox(width: 20),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,9 +82,7 @@ class ProfileScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const HistoryScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const HistoryScreen()),
                   );
                 },
                 child: Text("View History"),
@@ -96,7 +98,12 @@ class ProfileScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.dark_mode),
                 title: const Text("Dark Mode"),
-                trailing: Switch(value: false, onChanged: (v) {}),
+                trailing: Switch(
+                  value: isDarkMode,
+                  onChanged: (value) {
+                    onThemeChanged(value);
+                  },
+                ),
               ),
 
               const ListTile(

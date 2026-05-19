@@ -68,12 +68,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.deepPurple.shade50,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
+          ),
           SizedBox(height: 6),
           Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
         ],
@@ -140,8 +146,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   width: 14,
                   decoration: BoxDecoration(
                     color: isLatest
-                        ? Colors
-                              .deepPurple // highlight latest
+                        ? Colors.deepPurple // highlight latest
                         : Colors.deepPurple.shade200,
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -245,10 +250,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           margin: EdgeInsets.only(bottom: 8),
                           padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.orange
+                                : Colors.orange.shade50,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(text),
+                          child: Text(
+                            text,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
+                            ),
+                          ),
                         ),
                       ),
 
@@ -303,7 +318,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(

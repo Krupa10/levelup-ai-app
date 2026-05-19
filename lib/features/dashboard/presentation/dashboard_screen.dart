@@ -5,7 +5,14 @@ import 'package:level_up_ai/features/dashboard/presentation/profile_screen.dart'
 import 'package:level_up_ai/features/dashboard/presentation/tasks_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final Function(bool) onThemeChanged;
+  final bool isDarkMode;
+
+  const DashboardScreen({
+    super.key,
+    required this.onThemeChanged,
+    required this.isDarkMode,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -24,7 +31,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final List<Widget> screens = [
       HomeScreen(
         onStreakUpdated: (value) {
@@ -48,7 +54,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         },
       ),
-      ProfileScreen(streak: streak),
+      ProfileScreen(
+        streak: streak,
+        isDarkMode: widget.isDarkMode,
+        onThemeChanged: widget.onThemeChanged,
+      ),
     ];
 
     return Scaffold(

@@ -125,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
         title: const Text(
@@ -149,7 +149,13 @@ class _HomeScreenState extends State<HomeScreen> {
             // progress
             const Text("Today's Progress"),
             const SizedBox(height: 6),
-            LinearProgressIndicator(value: getProgress()),
+            LinearProgressIndicator(
+              value: getProgress(),
+              backgroundColor: Colors.grey.shade300,
+              valueColor: AlwaysStoppedAnimation(
+                Theme.of(context).colorScheme.primary,
+              ),
+            ),
             const SizedBox(height: 20),
 
             // goal input
@@ -168,6 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
                 onPressed: () {
                   if (goalController.text.trim().isEmpty) return;
 
@@ -190,23 +200,31 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Today's Plan",
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 10),
 
-                    Expanded(
-                      child: ListView(
+                    ListView(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
                         children: todayPlan.map((item) {
                           return GestureDetector(
                             onTap: () {
@@ -237,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               decoration: BoxDecoration(
                                 color: item["done"]
                                     ? Colors.grey.shade200
-                                    : Colors.white,
+                                    : Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
@@ -257,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       key: ValueKey(item["done"]),
                                       color: item["done"]
                                           ? Colors.green
-                                          : Colors.grey,
+                                          : Theme.of(context).textTheme.bodySmall?.color,
                                       size: 26,
                                     ),
                                   ),
@@ -274,10 +292,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ? TextDecoration.lineThrough
                                             : TextDecoration.none,
                                         decorationThickness: 2,
-                                        decorationColor: Colors.black,
+                                        decorationColor: Theme.of(context).textTheme.bodyLarge?.color,
                                         color: item["done"]
                                             ? Colors.black54
-                                            : Colors.black,
+                                            : Theme.of(context).textTheme.bodyLarge?.color,
                                         fontWeight: FontWeight.w500,
                                       ),
                                       child: Text(item["task"]),
@@ -289,7 +307,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         }).toList(),
                       ),
-                    ),
                   ],
                 ),
               ),
