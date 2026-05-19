@@ -5,7 +5,11 @@ class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
   final Function(List<Map<String, dynamic>>) onTasksUpdated;
 
-  const HomeScreen({super.key, required this.onStreakUpdated, required this.onTasksUpdated,});
+  const HomeScreen({
+    super.key,
+    required this.onStreakUpdated,
+    required this.onTasksUpdated,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -17,6 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int streak = 0;
   bool todayCompleted = false;
+  String currentGoal = "";
+  double goalProgress = 0;
 
   // plan generator
   List<Map<String, dynamic>> generatePlan(String goal) {
@@ -81,14 +87,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (tasks != null && status != null) {
       setState(() {
         todayPlan = List.generate(tasks.length, (index) {
-          return {
-            "task": tasks[index],
-            "done": status[index] == "true",
-          };
+          return {"task": tasks[index], "done": status[index] == "true"};
         });
       });
       widget.onTasksUpdated(todayPlan);
     }
+  }
+
+  //calculate goal progress
+  double calculateGoalProgress() {
+    if (todayPlan.isEmpty) return 0;
+
+    int completed = todayPlan.where((task) => task["done"]).length;
+
+    return completed / todayPlan.length;
   }
 
   //save history
@@ -149,6 +161,43 @@ class _HomeScreenState extends State<HomeScreen> {
             // progress
             const Text("Today's Progress"),
             const SizedBox(height: 6),
+
+            //calculated progress
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16),
+              margin: EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "🎯 Current Goal",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  Text(
+                    currentGoal.isEmpty ? "No goal set yet" : currentGoal,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  LinearProgressIndicator(
+                    value: goalProgress,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+
+                  SizedBox(height: 16),
+                  Text("${(goalProgress * 100).toInt()}% Completed"),
+                ],
+              ),
+            ),
             LinearProgressIndicator(
               value: getProgress(),
               backgroundColor: Colors.grey.shade300,
@@ -182,7 +231,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (goalController.text.trim().isEmpty) return;
 
                   setState(() {
-                    todayPlan = generatePlan(goalController.text);
+                    currentGoal = goalController.text;
+
+                    todayPlan = generatePlan(currentGoal);
+
+                    goalProgress = 0;
                     todayCompleted = false;
                   });
 
@@ -223,90 +276,95 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 10),
 
                     ListView(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        children: todayPlan.map((item) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                item["done"] = !item["done"];
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      children: todayPlan.map((item) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              item["done"] = !item["done"];
 
-                                bool allDoneNow = todayPlan.every(
-                                  (t) => t["done"],
-                                );
+                              bool allDoneNow = todayPlan.every(
+                                (t) => t["done"],
+                              );
 
-                                if (allDoneNow && !todayCompleted) {
-                                  streak++;
-                                  todayCompleted = true;
+                              if (allDoneNow && !todayCompleted) {
+                                streak++;
+                                todayCompleted = true;
 
-                                  saveStreak();
-                                  saveHistory();
-                                  widget.onStreakUpdated(streak);
-                                }
-                                savePlan();
-                              });
-                              widget.onTasksUpdated(todayPlan);
-                            },
-                            //checkbox
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: item["done"]
-                                    ? Colors.grey.shade200
-                                    : Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                children: [
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 300),
-                                    transitionBuilder: (child, animation) {
-                                      return ScaleTransition(
-                                        scale: animation,
-                                        child: child,
-                                      );
-                                    },
-                                    child: Icon(
-                                      item["done"]
-                                          ? Icons.check_circle
-                                          : Icons.circle_outlined,
-                                      key: ValueKey(item["done"]),
-                                      color: item["done"]
-                                          ? Colors.green
-                                          : Theme.of(context).textTheme.bodySmall?.color,
-                                      size: 26,
-                                    ),
-                                  ),
-
-                                  const SizedBox(width: 10),
-
-                                  Expanded(
-                                    child: AnimatedDefaultTextStyle(
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      style: TextStyle(
-                                        decoration: item["done"]
-                                            ? TextDecoration.lineThrough
-                                            : TextDecoration.none,
-                                        decorationThickness: 2,
-                                        decorationColor: Theme.of(context).textTheme.bodyLarge?.color,
-                                        color: item["done"]
-                                            ? Colors.black54
-                                            : Theme.of(context).textTheme.bodyLarge?.color,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      child: Text(item["task"]),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                saveStreak();
+                                saveHistory();
+                                widget.onStreakUpdated(streak);
+                              }
+                              savePlan();
+                            });
+                            widget.onTasksUpdated(todayPlan);
+                            goalProgress = calculateGoalProgress();
+                          },
+                          //checkbox
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: item["done"]
+                                  ? Colors.grey.shade200
+                                  : Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          );
-                        }).toList(),
-                      ),
+                            child: Row(
+                              children: [
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  transitionBuilder: (child, animation) {
+                                    return ScaleTransition(
+                                      scale: animation,
+                                      child: child,
+                                    );
+                                  },
+                                  child: Icon(
+                                    item["done"]
+                                        ? Icons.check_circle
+                                        : Icons.circle_outlined,
+                                    key: ValueKey(item["done"]),
+                                    color: item["done"]
+                                        ? Colors.green
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall?.color,
+                                    size: 26,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 10),
+
+                                Expanded(
+                                  child: AnimatedDefaultTextStyle(
+                                    duration: const Duration(milliseconds: 300),
+                                    style: TextStyle(
+                                      decoration: item["done"]
+                                          ? TextDecoration.lineThrough
+                                          : TextDecoration.none,
+                                      decorationThickness: 2,
+                                      decorationColor: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.color,
+                                      color: item["done"]
+                                          ? Colors.black54
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.color,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    child: Text(item["task"]),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ],
                 ),
               ),
