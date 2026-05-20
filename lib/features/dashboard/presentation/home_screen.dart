@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../services/notification_service.dart';
+
 class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
   final Function(List<Map<String, dynamic>>) onTasksUpdated;
@@ -368,6 +370,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+            ),
+
+            //notification button
+            ElevatedButton(
+              onPressed: () {
+                NotificationService.showNotification();
+              },
+              child: Text("Test Notification"),
             ),
           ],
         ),
