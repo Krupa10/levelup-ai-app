@@ -379,6 +379,14 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Text("Test Notification"),
             ),
+
+            //scheduled notification
+            ElevatedButton(
+              onPressed: () {
+                NotificationService.scheduleNotification();
+              },
+              child: Text("Schedule Notification"),
+            ),
           ],
         ),
       ),

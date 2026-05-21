@@ -3,10 +3,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'package:level_up_ai/services/notification_service.dart';
+import 'package:timezone/data/latest.dart' as tz;
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  tz.initializeTimeZones();
   await NotificationService.initialize();
 
   runApp(LevelUpAI());
