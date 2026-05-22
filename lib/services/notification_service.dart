@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'dart:math';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin
@@ -47,6 +48,21 @@ class NotificationService {
     );
   }
 
+  static List<String> motivationalMessages = [
+    "Complete today's tasks and keep your streak alive 🔥",
+    "Small progress every day leads to big success 🚀",
+    "Stay consistent. Your future self will thank you 💪",
+    "Your goals are waiting for you 👑",
+  ];
+
+  //get random message
+  static String getRandomMessage() {
+    final random = Random();
+
+    return motivationalMessages[
+    random.nextInt(motivationalMessages.length)];
+  }
+
   static Future<void> scheduleNotification() async {
     const AndroidNotificationDetails androidDetails =
     AndroidNotificationDetails(
@@ -75,5 +91,61 @@ class NotificationService {
       UILocalNotificationDateInterpretation.absoluteTime,
     );
     print("Notification scheduled");
+  }
+
+  // daily reminder message
+  static Future<void> scheduleDailyReminder() async {
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+      'daily_reminder_channel',
+      'Daily Reminder',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails details =
+    NotificationDetails(
+      android: androidDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      2,
+      'LevelUp AI 🚀',
+      getRandomMessage(),
+      _nextInstanceOfNineAM(),
+      details,
+      androidScheduleMode:
+      AndroidScheduleMode.inexactAllowWhileIdle,
+
+      matchDateTimeComponents:
+      DateTimeComponents.time,
+
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  //Time function
+  static tz.TZDateTime _nextInstanceOfNineAM() {
+    final tz.TZDateTime now =
+    tz.TZDateTime.now(tz.local);
+
+    tz.TZDateTime scheduledDate =
+    tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      9,
+    );
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate =
+          scheduledDate.add(
+            const Duration(days: 1),
+          );
+    }
+
+    return scheduledDate;
   }
 }

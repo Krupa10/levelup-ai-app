@@ -373,12 +373,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             //notification button
-            ElevatedButton(
+           /* ElevatedButton(
               onPressed: () {
                 NotificationService.showNotification();
               },
               child: Text("Test Notification"),
-            ),
+            ),*/
 
             //scheduled notification
             ElevatedButton(
@@ -386,6 +386,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 NotificationService.scheduleNotification();
               },
               child: Text("Schedule Notification"),
+            ),
+
+            //daily reminder
+            ElevatedButton(
+              onPressed: () {
+                NotificationService.scheduleDailyReminder();
+              },
+              child: Text("Start Daily Reminder"),
             ),
           ],
         ),
