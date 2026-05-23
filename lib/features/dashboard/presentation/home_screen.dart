@@ -26,6 +26,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String currentGoal = "";
   double goalProgress = 0;
 
+  //user selected reminder time
+  TimeOfDay selectedReminderTime = const TimeOfDay(hour: 9, minute: 0);
+
+  String reminderText = "9:00 AM";
+
   // plan generator
   List<Map<String, dynamic>> generatePlan(String goal) {
     goal = goal.toLowerCase();
@@ -119,6 +124,42 @@ class _HomeScreenState extends State<HomeScreen> {
     await prefs.setStringList(today, completedTasks);
   }
 
+  //time picker function
+  Future<void> pickReminderTime() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: selectedReminderTime,
+    );
+
+    if (pickedTime == null) return;
+
+    // Smart reminder validation
+    if (pickedTime.hour < 6 || pickedTime.hour > 23) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Choose a healthier reminder time 😊")),
+      );
+
+      return;
+    }
+
+    setState(() {
+      selectedReminderTime = pickedTime;
+
+      reminderText = pickedTime.format(context);
+    });
+
+    // Schedule notification
+    await NotificationService.scheduleCustomReminder(
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    // Success popup
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Reminder set for $reminderText 🔔")),
+    );
+  }
+
   // init
   @override
   void initState() {
@@ -147,112 +188,121 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // streak
-            Text(
-              "🔥 Streak: $streak days",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            if (streak > 0) const Text("Keep going! You're consistent 🚀"),
-            const SizedBox(height: 16),
-
-            // progress
-            const Text("Today's Progress"),
-            const SizedBox(height: 6),
-
-            //calculated progress
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(12),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // streak
+              Text(
+                "🔥 Streak: $streak days",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "🎯 Current Goal",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+              if (streak > 0) const Text("Keep going! You're consistent 🚀"),
+              const SizedBox(height: 16),
 
-                  SizedBox(height: 10),
+              // progress
+              const Text("Today's Progress"),
+              const SizedBox(height: 6),
 
-                  Text(
-                    currentGoal.isEmpty ? "No goal set yet" : currentGoal,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-
-                  SizedBox(height: 10),
-
-                  LinearProgressIndicator(
-                    value: goalProgress,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-
-                  SizedBox(height: 16),
-                  Text("${(goalProgress * 100).toInt()}% Completed"),
-                ],
-              ),
-            ),
-            LinearProgressIndicator(
-              value: getProgress(),
-              backgroundColor: Colors.grey.shade300,
-              valueColor: AlwaysStoppedAnimation(
-                Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // goal input
-            TextField(
-              controller: goalController,
-              decoration: InputDecoration(
-                hintText: "Enter your goal (e.g. Flutter job)",
-                border: OutlineInputBorder(
+              //calculated progress
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                margin: EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "🎯 Current Goal",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
 
-            // generate plan
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    SizedBox(height: 10),
+
+                    Text(
+                      currentGoal.isEmpty ? "No goal set yet" : currentGoal,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    SizedBox(height: 10),
+
+                    LinearProgressIndicator(
+                      value: goalProgress,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+
+                    SizedBox(height: 16),
+                    Text("${(goalProgress * 100).toInt()}% Completed"),
+                  ],
                 ),
-                onPressed: () {
-                  if (goalController.text.trim().isEmpty) return;
-
-                  setState(() {
-                    currentGoal = goalController.text;
-
-                    todayPlan = generatePlan(currentGoal);
-
-                    goalProgress = 0;
-                    todayCompleted = false;
-                  });
-
-                  widget.onTasksUpdated(todayPlan);
-                  savePlan();
-                  goalController.clear();
-                },
-                child: const Text("Generate Plan"),
               ),
-            ),
-            const SizedBox(height: 20),
+              LinearProgressIndicator(
+                value: getProgress(),
+                backgroundColor: Colors.grey.shade300,
+                valueColor: AlwaysStoppedAnimation(
+                  Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 20),
 
-            // plan list
-            Expanded(
-              child: Container(
+              // goal input
+              TextField(
+                controller: goalController,
+                decoration: InputDecoration(
+                  hintText: "Enter your goal (e.g. Flutter job)",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // generate plan
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  onPressed: () {
+                    if (goalController.text.trim().isEmpty) return;
+
+                    setState(() {
+                      currentGoal = goalController.text;
+
+                      todayPlan = generatePlan(currentGoal);
+
+                      goalProgress = 0;
+                      todayCompleted = false;
+                    });
+
+                    widget.onTasksUpdated(todayPlan);
+                    savePlan();
+                    goalController.clear();
+                  },
+                  child: const Text("Generate Plan"),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // plan list
+              Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
@@ -340,26 +390,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 const SizedBox(width: 10),
 
-                                Expanded(
-                                  child: AnimatedDefaultTextStyle(
-                                    duration: const Duration(milliseconds: 300),
-                                    style: TextStyle(
-                                      decoration: item["done"]
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none,
-                                      decorationThickness: 2,
-                                      decorationColor: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge?.color,
-                                      color: item["done"]
-                                          ? Colors.black54
-                                          : Theme.of(
-                                              context,
-                                            ).textTheme.bodyLarge?.color,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    child: Text(item["task"]),
+                                AnimatedDefaultTextStyle(
+                                  duration: const Duration(milliseconds: 300),
+                                  style: TextStyle(
+                                    decoration: item["done"]
+                                        ? TextDecoration.lineThrough
+                                        : TextDecoration.none,
+                                    decorationThickness: 2,
+                                    decorationColor: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
+                                    color: item["done"]
+                                        ? Colors.black54
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.color,
+                                    fontWeight: FontWeight.w500,
                                   ),
+                                  child: Text(item["task"]),
                                 ),
                               ],
                             ),
@@ -370,15 +418,48 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-            ),
 
-            //notification button
-           /* ElevatedButton(
+              //reminder UI card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "🔔 Daily Reminder",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text("Reminder Time: $reminderText"),
+
+                    const SizedBox(height: 12),
+
+                    ElevatedButton(
+                      onPressed: pickReminderTime,
+                      child: const Text("Change Reminder Time"),
+                    ),
+                  ],
+                ),
+              ),
+
+              /* //notification button
+             ElevatedButton(
               onPressed: () {
                 NotificationService.showNotification();
               },
               child: Text("Test Notification"),
-            ),*/
+            ),
 
             //scheduled notification
             ElevatedButton(
@@ -388,14 +469,15 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text("Schedule Notification"),
             ),
 
-            //daily reminder
+            //daily motivational reminder
             ElevatedButton(
               onPressed: () {
                 NotificationService.scheduleDailyReminder();
               },
               child: Text("Start Daily Reminder"),
-            ),
-          ],
+            ),*/
+            ],
+          ),
         ),
       ),
     );

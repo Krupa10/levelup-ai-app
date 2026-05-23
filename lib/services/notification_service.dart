@@ -148,4 +148,70 @@ class NotificationService {
 
     return scheduledDate;
   }
+
+  //custom reminder function
+  static Future<void> scheduleCustomReminder(
+      int hour,
+      int minute,
+      ) async {
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+      'custom_reminder_channel',
+      'Custom Reminder',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails details =
+    NotificationDetails(
+      android: androidDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      3,
+      'LevelUp Reminder 🚀',
+      getRandomMessage(),
+
+      _nextInstanceOfTime(hour, minute),
+
+      details,
+
+      androidScheduleMode:
+      AndroidScheduleMode.inexactAllowWhileIdle,
+
+      matchDateTimeComponents:
+      DateTimeComponents.time,
+
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  //dynamic time function
+  static tz.TZDateTime _nextInstanceOfTime(
+      int hour,
+      int minute,
+      ) {
+    final tz.TZDateTime now =
+    tz.TZDateTime.now(tz.local);
+
+    tz.TZDateTime scheduledDate =
+    tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate =
+          scheduledDate.add(
+            const Duration(days: 1),
+          );
+    }
+
+    return scheduledDate;
+  }
 }
