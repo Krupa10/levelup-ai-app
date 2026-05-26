@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../services/notification_service.dart';
+import '../../../core/widgets/modern_card.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/section_title.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
@@ -195,62 +198,49 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // streak
-              Text(
-                "🔥 Streak: $streak days",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              SectionTitle(
+                title: "🔥 Streak: $streak days",
               ),
-              if (streak > 0) const Text("Keep going! You're consistent 🚀"),
+              if (streak > 0)
+                SectionTitle(
+                  title:"Keep going! You're consistent 🚀",
+                ),
               const SizedBox(height: 16),
 
               // progress
-              const Text("Today's Progress"),
+              SectionTitle(
+                title: "Today's Progress",
+              ),
               const SizedBox(height: 6),
 
               //calculated progress
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16),
-                margin: EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              ModernCard(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "🎯 Current Goal",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionTitle(
+                    title:  "🎯 Current Goal",
+                  ),
+                  SizedBox(height: 10),
 
-                    SizedBox(height: 10),
+                  SectionTitle(
+                    title:  currentGoal.isEmpty ? "No goal set yet" : currentGoal,
+                  ),
+                  SizedBox(height: 10),
 
-                    Text(
-                      currentGoal.isEmpty ? "No goal set yet" : currentGoal,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  LinearProgressIndicator(
+                    value: goalProgress,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
 
-                    SizedBox(height: 10),
-
-                    LinearProgressIndicator(
-                      value: goalProgress,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-
-                    SizedBox(height: 16),
-                    Text("${(goalProgress * 100).toInt()}% Completed"),
-                  ],
-                ),
+                  SizedBox(height: 16),
+                  SectionTitle(
+                    title: "${(goalProgress * 100).toInt()}% Completed",
+                  ),
+                ],
               ),
+              ),
+
               LinearProgressIndicator(
                 value: getProgress(),
                 backgroundColor: Colors.grey.shade300,
@@ -275,11 +265,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // generate plan
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                child: CustomButton(
+                  text: "Generate Plan",
                   onPressed: () {
                     if (goalController.text.trim().isEmpty) return;
 
@@ -296,34 +283,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     savePlan();
                     goalController.clear();
                   },
-                  child: const Text("Generate Plan"),
                 ),
               ),
               const SizedBox(height: 20),
 
               // plan list
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
-                    ),
-                  ],
-                ),
+              ModernCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Today's Plan",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
+                    const SectionTitle(
+                      title: "Today's Plan",
                     ),
                     const SizedBox(height: 10),
 
@@ -337,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               item["done"] = !item["done"];
 
                               bool allDoneNow = todayPlan.every(
-                                (t) => t["done"],
+                                    (t) => t["done"],
                               );
 
                               if (allDoneNow && !todayCompleted) {
@@ -382,8 +352,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: item["done"]
                                         ? Colors.green
                                         : Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall?.color,
+                                      context,
+                                    ).textTheme.bodySmall?.color,
                                     size: 26,
                                   ),
                                 ),
@@ -403,8 +373,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: item["done"]
                                         ? Colors.black54
                                         : Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.color,
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                                     fontWeight: FontWeight.w500,
                                   ),
                                   child: Text(item["task"]),
@@ -420,62 +390,54 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               //reminder UI card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              const SizedBox(height: 10),
+              ModernCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "🔔 Daily Reminder",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    const SectionTitle(
+                      title:  "🔔 Daily Reminder",
                     ),
 
                     const SizedBox(height: 10),
 
-                    Text("Reminder Time: $reminderText"),
+                    SectionTitle(
+                      title:  "Reminder Time: $reminderText",
+                    ),
 
                     const SizedBox(height: 12),
 
-                    ElevatedButton(
+                    CustomButton(
+                      text: "Change Reminder Time",
                       onPressed: pickReminderTime,
-                      child: const Text("Change Reminder Time"),
                     ),
                   ],
                 ),
               ),
 
-              /* //notification button
-             ElevatedButton(
-              onPressed: () {
-                NotificationService.showNotification();
-              },
-              child: Text("Test Notification"),
-            ),
+            /*  //notification button
+              CustomButton(
+                text: "Test Notification",
+                onPressed: () {
+                  NotificationService.showNotification();
+                },
+              ),
 
-            //scheduled notification
-            ElevatedButton(
-              onPressed: () {
-                NotificationService.scheduleNotification();
-              },
-              child: Text("Schedule Notification"),
-            ),
+              //scheduled notification
+              CustomButton(
+                text: "Schedule Notification",
+                onPressed: () {
+                  NotificationService.scheduleNotification();
+                },
+              ),
 
-            //daily motivational reminder
-            ElevatedButton(
-              onPressed: () {
-                NotificationService.scheduleDailyReminder();
-              },
-              child: Text("Start Daily Reminder"),
-            ),*/
+              //daily motivational reminder
+              CustomButton(
+                text: "Schedule Notification",
+                onPressed: () {
+                  NotificationService.scheduleNotification();
+                },
+              ),*/
             ],
           ),
         ),
