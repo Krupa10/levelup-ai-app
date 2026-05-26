@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'package:level_up_ai/services/notification_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'core/theme/app_theme.dart';
 
 
 void main() async {
@@ -51,17 +52,12 @@ class _LevelUpAIState extends State<LevelUpAI> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      theme: ThemeData.light().copyWith(
-        scaffoldBackgroundColor: Colors.grey.shade100,
-        cardColor: Colors.white,
-      ),
-
-      darkTheme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Color(0xFF121212),
-        cardColor: Color(0xFF1E1E1E),
-      ),
-
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode:
+      isDarkMode
+          ? ThemeMode.dark
+          : ThemeMode.light,
 
       home: DashboardScreen(
         onThemeChanged: toggleTheme,
