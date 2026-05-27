@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 class SectionTitle extends StatelessWidget {
   final String title;
 
+  final double fontSize;
+
   const SectionTitle({
     super.key,
     required this.title,
+    this.fontSize = 18,
   });
 
   @override
@@ -13,8 +16,8 @@ class SectionTitle extends StatelessWidget {
     return Text(
       title,
 
-      style: const TextStyle(
-        fontSize: 18,
+      style: TextStyle(
+        fontSize: fontSize,
         fontWeight: FontWeight.bold,
       ),
     );

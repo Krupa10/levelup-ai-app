@@ -5,6 +5,7 @@ import '../../../services/notification_service.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/section_title.dart';
+import '../../../core/widgets/task_tile.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
@@ -301,87 +302,54 @@ class _HomeScreenState extends State<HomeScreen> {
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       children: todayPlan.map((item) {
-                        return GestureDetector(
+                        return TaskTile(
+                          title: item["task"],
+
+                          isDone: item["done"],
+
                           onTap: () {
                             setState(() {
-                              item["done"] = !item["done"];
 
-                              bool allDoneNow = todayPlan.every(
+                              // toggle task
+                              item["done"] =
+                              !item["done"];
+
+                              // check if all tasks completed
+                              bool allDoneNow =
+                              todayPlan.every(
                                     (t) => t["done"],
                               );
 
-                              if (allDoneNow && !todayCompleted) {
+                              // streak update
+                              if (allDoneNow &&
+                                  !todayCompleted) {
+
                                 streak++;
+
                                 todayCompleted = true;
 
                                 saveStreak();
+
                                 saveHistory();
-                                widget.onStreakUpdated(streak);
+
+                                widget.onStreakUpdated(
+                                  streak,
+                                );
                               }
+
+                              // save updated task state
                               savePlan();
+
+                              // update goal progress
+                              goalProgress =
+                                  calculateGoalProgress();
                             });
-                            widget.onTasksUpdated(todayPlan);
-                            goalProgress = calculateGoalProgress();
+
+                            // update task screen
+                            widget.onTasksUpdated(
+                              todayPlan,
+                            );
                           },
-                          //checkbox
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: item["done"]
-                                  ? Colors.grey.shade200
-                                  : Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  transitionBuilder: (child, animation) {
-                                    return ScaleTransition(
-                                      scale: animation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: Icon(
-                                    item["done"]
-                                        ? Icons.check_circle
-                                        : Icons.circle_outlined,
-                                    key: ValueKey(item["done"]),
-                                    color: item["done"]
-                                        ? Colors.green
-                                        : Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall?.color,
-                                    size: 26,
-                                  ),
-                                ),
-
-                                const SizedBox(width: 10),
-
-                                AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 300),
-                                  style: TextStyle(
-                                    decoration: item["done"]
-                                        ? TextDecoration.lineThrough
-                                        : TextDecoration.none,
-                                    decorationThickness: 2,
-                                    decorationColor: Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge?.color,
-                                    color: item["done"]
-                                        ? Colors.black54
-                                        : Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge?.color,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  child: Text(item["task"]),
-                                ),
-                              ],
-                            ),
-                          ),
                         );
                       }).toList(),
                     ),
