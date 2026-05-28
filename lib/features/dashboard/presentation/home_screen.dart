@@ -6,6 +6,7 @@ import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/section_title.dart';
 import '../../../core/widgets/task_tile.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
@@ -194,52 +195,46 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // streak
-              SectionTitle(
-                title: "🔥 Streak: $streak days",
-              ),
+              SectionTitle(title: "🔥 Streak: $streak days"),
               if (streak > 0)
-                SectionTitle(
-                  title:"Keep going! You're consistent 🚀",
-                ),
-              const SizedBox(height: 16),
+                SectionTitle(title: "Keep going! You're consistent 🚀"),
+              const SizedBox(height: AppSpacing.md),
 
               // progress
-              SectionTitle(
-                title: "Today's Progress",
-              ),
-              const SizedBox(height: 6),
+              SectionTitle(title: "Today's Progress"),
+              const SizedBox(height: AppSpacing.xs),
 
               //calculated progress
               ModernCard(
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SectionTitle(
-                    title:  "🎯 Current Goal",
-                  ),
-                  SizedBox(height: 10),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionTitle(title: "🎯 Current Goal"),
+                    SizedBox(height: AppSpacing.md),
 
-                  SectionTitle(
-                    title:  currentGoal.isEmpty ? "No goal set yet" : currentGoal,
-                  ),
-                  SizedBox(height: 10),
+                    SectionTitle(
+                      title: currentGoal.isEmpty
+                          ? "No goal set yet"
+                          : currentGoal,
+                    ),
+                    SizedBox(height: AppSpacing.md),
 
-                  LinearProgressIndicator(
-                    value: goalProgress,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                    LinearProgressIndicator(
+                      value: goalProgress,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
 
-                  SizedBox(height: 16),
-                  SectionTitle(
-                    title: "${(goalProgress * 100).toInt()}% Completed",
-                  ),
-                ],
-              ),
+                    SizedBox(height: AppSpacing.md),
+                    SectionTitle(
+                      title: "${(goalProgress * 100).toInt()}% Completed",
+                    ),
+                  ],
+                ),
               ),
 
               LinearProgressIndicator(
@@ -249,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Theme.of(context).colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
 
               // goal input
               TextField(
@@ -261,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.md),
 
               // generate plan
               SizedBox(
@@ -286,17 +281,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
 
               // plan list
               ModernCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionTitle(
-                      title: "Today's Plan",
-                    ),
-                    const SizedBox(height: 10),
+                    const SectionTitle(title: "Today's Plan"),
+                    const SizedBox(height: AppSpacing.md),
 
                     ListView(
                       shrinkWrap: true,
@@ -309,21 +302,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           onTap: () {
                             setState(() {
-
                               // toggle task
-                              item["done"] =
-                              !item["done"];
+                              item["done"] = !item["done"];
 
                               // check if all tasks completed
-                              bool allDoneNow =
-                              todayPlan.every(
-                                    (t) => t["done"],
+                              bool allDoneNow = todayPlan.every(
+                                (t) => t["done"],
                               );
 
                               // streak update
-                              if (allDoneNow &&
-                                  !todayCompleted) {
-
+                              if (allDoneNow && !todayCompleted) {
                                 streak++;
 
                                 todayCompleted = true;
@@ -332,23 +320,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 saveHistory();
 
-                                widget.onStreakUpdated(
-                                  streak,
-                                );
+                                widget.onStreakUpdated(streak);
                               }
 
                               // save updated task state
                               savePlan();
 
                               // update goal progress
-                              goalProgress =
-                                  calculateGoalProgress();
+                              goalProgress = calculateGoalProgress();
                             });
 
                             // update task screen
-                            widget.onTasksUpdated(
-                              todayPlan,
-                            );
+                            widget.onTasksUpdated(todayPlan);
                           },
                         );
                       }).toList(),
@@ -358,22 +341,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               //reminder UI card
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.md),
               ModernCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionTitle(
-                      title:  "🔔 Daily Reminder",
-                    ),
+                    const SectionTitle(title: "🔔 Daily Reminder"),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.md),
 
-                    SectionTitle(
-                      title:  "Reminder Time: $reminderText",
-                    ),
+                    SectionTitle(title: "Reminder Time: $reminderText"),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
 
                     CustomButton(
                       text: "Change Reminder Time",
@@ -383,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-            /*  //notification button
+              /*  //notification button
               CustomButton(
                 text: "Test Notification",
                 onPressed: () {
