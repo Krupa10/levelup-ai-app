@@ -12,10 +12,15 @@ class HomeScreen extends StatefulWidget {
   final Function(int) onStreakUpdated;
   final Function(List<Map<String, dynamic>>) onTasksUpdated;
 
+  final List<Map<String, dynamic>> tasks;
+  final Function(int) onTaskToggle;
+
   const HomeScreen({
     super.key,
     required this.onStreakUpdated,
     required this.onTasksUpdated,
+    required this.tasks,
+    required this.onTaskToggle,
   });
 
   @override
@@ -23,13 +28,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Map<String, dynamic>> todayPlan = [];
   TextEditingController goalController = TextEditingController();
 
   int streak = 0;
   bool todayCompleted = false;
   String currentGoal = "";
-  double goalProgress = 0;
+  List<Map<String, dynamic>> get todayPlan => widget.tasks;
 
   //user selected reminder time
   TimeOfDay selectedReminderTime = const TimeOfDay(hour: 9, minute: 0);
@@ -73,37 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // send to dashboard
     widget.onStreakUpdated(streak);
-  }
-
-  //save plan
-  Future<void> savePlan() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    List<String> tasks = todayPlan.map((t) => t["task"] as String).toList();
-    List<bool> status = todayPlan.map((t) => t["done"] as bool).toList();
-
-    await prefs.setStringList("tasks", tasks);
-    await prefs.setStringList(
-      "status",
-      status.map((e) => e.toString()).toList(),
-    );
-  }
-
-  //load plan
-  Future<void> loadPlan() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    List<String>? tasks = prefs.getStringList("tasks");
-    List<String>? status = prefs.getStringList("status");
-
-    if (tasks != null && status != null) {
-      setState(() {
-        todayPlan = List.generate(tasks.length, (index) {
-          return {"task": tasks[index], "done": status[index] == "true"};
-        });
-      });
-      widget.onTasksUpdated(todayPlan);
-    }
   }
 
   //calculate goal progress
@@ -169,9 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    todayPlan = generatePlan("flutter job");
     loadStreak();
-    loadPlan();
   }
 
   // progress
@@ -225,13 +196,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: AppSpacing.md),
 
                     LinearProgressIndicator(
-                      value: goalProgress,
+                      value: calculateGoalProgress(),
                       borderRadius: BorderRadius.circular(10),
                     ),
 
                     SizedBox(height: AppSpacing.md),
                     SectionTitle(
-                      title: "${(goalProgress * 100).toInt()}% Completed",
+                      title:
+                          "${(calculateGoalProgress() * 100).toInt()}% Completed",
                     ),
                   ],
                 ),
@@ -269,14 +241,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     setState(() {
                       currentGoal = goalController.text;
 
-                      todayPlan = generatePlan(currentGoal);
+                      widget.onTasksUpdated(generatePlan(currentGoal));
 
-                      goalProgress = 0;
                       todayCompleted = false;
                     });
-
-                    widget.onTasksUpdated(todayPlan);
-                    savePlan();
                     goalController.clear();
                   },
                 ),
@@ -301,10 +269,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           isDone: item["done"],
 
                           onTap: () {
-                            setState(() {
-                              // toggle task
-                              item["done"] = !item["done"];
+                            final index = todayPlan.indexOf(item);
 
+                            setState(() {
+                              widget.onTaskToggle(index);
                               // check if all tasks completed
                               bool allDoneNow = todayPlan.every(
                                 (t) => t["done"],
@@ -322,16 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 widget.onStreakUpdated(streak);
                               }
-
-                              // save updated task state
-                              savePlan();
-
-                              // update goal progress
-                              goalProgress = calculateGoalProgress();
                             });
-
-                            // update task screen
-                            widget.onTasksUpdated(todayPlan);
                           },
                         );
                       }).toList(),

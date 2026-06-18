@@ -3,6 +3,7 @@ import 'package:level_up_ai/features/dashboard/presentation/chat_screen.dart';
 import 'package:level_up_ai/features/dashboard/presentation/home_screen.dart';
 import 'package:level_up_ai/features/dashboard/presentation/profile_screen.dart';
 import 'package:level_up_ai/features/dashboard/presentation/tasks_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(bool) onThemeChanged;
@@ -29,19 +30,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  //save plan
+  Future<void> savePlan() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> taskNames = tasks.map((t) => t["task"] as String).toList();
+
+    List<bool> status = tasks.map((t) => t["done"] as bool).toList();
+
+    await prefs.setStringList("tasks", taskNames);
+
+    await prefs.setStringList(
+      "status",
+      status.map((e) => e.toString()).toList(),
+    );
+  }
+
+  //load plan
+  Future<void> loadPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String>? taskNames = prefs.getStringList("tasks");
+    List<String>? status = prefs.getStringList("status");
+
+    if (taskNames != null && status != null) {
+      setState(() {
+        tasks = List.generate(taskNames.length, (index) {
+          return {"task": taskNames[index], "done": status[index] == "true"};
+        });
+      });
+    }
+  }
+
+  //init state
+  @override
+  void initState() {
+    super.initState();
+    loadPlan();
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       HomeScreen(
+        tasks: tasks,
+
+        onTaskToggle: (index) {
+          setState(() {
+            tasks[index]["done"] = !tasks[index]["done"];
+          });
+
+          savePlan();
+        },
+
         onStreakUpdated: (value) {
           setState(() {
             streak = value;
           });
         },
+
         onTasksUpdated: (updatedTasks) {
           setState(() {
             tasks = updatedTasks;
           });
+
+          savePlan();
         },
       ),
 
@@ -52,6 +105,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           setState(() {
             tasks[index]["done"] = !tasks[index]["done"];
           });
+
+          savePlan();
         },
       ),
       ProfileScreen(
