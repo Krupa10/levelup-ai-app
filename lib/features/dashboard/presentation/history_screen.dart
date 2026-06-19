@@ -116,6 +116,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
           "Weekly Activity 📅",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
+        Text(
+          "Tasks completed in recent days",
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         SizedBox(height: 16),
 
         Row(
@@ -146,7 +150,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   width: 14,
                   decoration: BoxDecoration(
                     color: isLatest
-                        ? Colors.deepPurple // highlight latest
+                        ? Colors
+                              .deepPurple // highlight latest
                         : Colors.deepPurple.shade200,
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -217,6 +222,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return insights;
   }
 
+  //completion rate
+  double getCompletionRate() {
+    if (history.isEmpty) return 0;
+
+    int totalCompleted = 0;
+
+    for (var day in history.values) {
+      totalCompleted += day.length;
+    }
+
+    return totalCompleted / (history.length * 3);
+  }
+
   @override
   Widget build(BuildContext context) {
     final dates = history.keys.toList()..sort((a, b) => b.compareTo(a));
@@ -226,7 +244,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("History")),
       body: history.isEmpty
-          ? const Center(child: Text("No history yet"))
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.history, size: 70),
+                  SizedBox(height: 12),
+                  Text("No history yet"),
+                ],
+              ),
+            )
           : Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -271,14 +298,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ],
                   ),
                   buildChart(),
+
+                  //productivity score card
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "📈 Productivity Score",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        LinearProgressIndicator(
+                          value: getCompletionRate(),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        Text(
+                          "${(getCompletionRate() * 100).toInt()}% Completion Rate",
+                        ),
+                      ],
+                    ),
+                  ),
                   SizedBox(height: 20),
+
                   // analytics section
-                  Text(
-                    "Your Analytics 📊",
+                  const Text(
+                    "📊 Performance Overview",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 10),
 
+                  //chart
                   Row(
                     children: [
                       Expanded(
@@ -289,19 +354,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                       SizedBox(width: 10),
                       Expanded(
-                        child: _buildStatCard(
-                          "Days Active",
-                          analytics["totalDays"].toString(),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: _buildStatCard(
+                            "Days Active",
+                            analytics["totalDays"].toString(),
+                          ),
                         ),
                       ),
                     ],
                   ),
-
-                  SizedBox(height: 10),
-
-                  _buildStatCard(
-                    "Best Day",
-                    "${analytics["bestDay"]} (${analytics["bestDayCount"]} tasks)",
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _buildStatCard(
+                      "Best Day",
+                      "${analytics["bestDay"]} (${analytics["bestDayCount"]} tasks)",
+                    ),
                   ),
 
                   SizedBox(height: 20),
@@ -338,10 +407,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ...tasks.map(
                                 (task) => Row(
                                   children: [
-                                    const Icon(
-                                      Icons.check,
-                                      color: Colors.green,
-                                      size: 18,
+                                    Container(
+                                      width: 22,
+                                      height: 22,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(child: Text(task)),

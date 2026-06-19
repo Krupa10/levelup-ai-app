@@ -130,6 +130,13 @@ class _ChatScreen extends State<ChatScreen> {
 
   final ScrollController _scrollController = ScrollController();
 
+  @override
+  void initState() {
+    super.initState();
+
+    loadChatHistory();
+  }
+
   //dummy response
   void sendMessage(String text) {
     if (text.trim().isEmpty) return;
@@ -249,13 +256,6 @@ class _ChatScreen extends State<ChatScreen> {
         scrollToBottom(animated: false);
       });
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    loadChatHistory();
   }
 
   @override
