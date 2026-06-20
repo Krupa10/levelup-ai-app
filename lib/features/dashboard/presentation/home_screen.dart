@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/widgets/custom_app_bar.dart';
 import '../../../services/notification_service.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -157,13 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text(
-          "LevelUp AI",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const CustomAppBar(title: "LevelUp AI"),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -202,8 +197,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     SizedBox(height: AppSpacing.md),
                     SectionTitle(
-                      title:
-                          "${(calculateGoalProgress() * 100).toInt()}% Completed",
+                      title: currentGoal.isEmpty
+                          ? "Set a goal to start tracking"
+                          : "${(calculateGoalProgress() * 100).toInt()}% Completed",
                     ),
                   ],
                 ),

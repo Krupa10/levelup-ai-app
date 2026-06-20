@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/widgets/custom_app_bar.dart';
+
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -242,7 +244,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final insights = generateInsights();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("History")),
+      appBar: const CustomAppBar(title: "History"),
       body: history.isEmpty
           ? Center(
               child: Column(

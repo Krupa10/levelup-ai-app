@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/task_tile.dart';
 
@@ -18,26 +19,18 @@ class TasksScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Your Tasks",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: AppSpacing.xs),
-            Text(
-              "Stay consistent and finish strong 💪",
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
+      appBar: const CustomAppBar(title: "Your Tasks"),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
+            //subtitle
+            Text(
+              "Stay consistent and finish strong 💪",
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
             //Progress
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

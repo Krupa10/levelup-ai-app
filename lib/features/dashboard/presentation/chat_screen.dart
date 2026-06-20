@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/section_title.dart';
 import 'dart:convert';
@@ -214,8 +215,7 @@ class _ChatScreen extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
 
-      final offset =
-          _scrollController.position.maxScrollExtent;
+      final offset = _scrollController.position.maxScrollExtent;
 
       if (animated) {
         _scrollController.animateTo(
@@ -261,7 +261,7 @@ class _ChatScreen extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("AI Coach")),
+      appBar: const CustomAppBar(title: "AI Coach"),
       body: Column(
         children: [
           ModernCard(
@@ -307,8 +307,9 @@ class _ChatScreen extends State<ChatScreen> {
                             ? Alignment.centerRight
                             : Alignment.centerLeft,
                         child: Container(
-                          constraints: BoxConstraints(maxWidth:
-                          MediaQuery.of(context).size.width * 0.75),
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          ),
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           decoration: BoxDecoration(

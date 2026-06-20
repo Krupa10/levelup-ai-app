@@ -47,6 +47,8 @@ class AppTheme {
       foregroundColor:
       Colors.white,
       elevation: 0,
+      centerTitle: false,
+      toolbarHeight: 64,
     ),
 
     elevatedButtonTheme:
