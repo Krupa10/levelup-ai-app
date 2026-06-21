@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/widgets/custom_app_bar.dart';
+import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/modern_card.dart';
+import '../../../core/widgets/progress_card.dart';
+import '../../../core/widgets/section_title.dart';
+import '../../../core/widgets/stat_card.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -65,30 +70,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     };
   }
 
-  //build card
-  Widget _buildStatCard(String title, String value) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
-          ),
-          SizedBox(height: 6),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
   //data for chart
   Map<String, int> getWeeklyData() {
     Map<String, int> data = {};
@@ -105,11 +86,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final data = getWeeklyData();
     final dates = data.keys.toList()..sort();
 
+    final recentDates = dates.length > 7
+        ? dates.sublist(dates.length - 7)
+        : dates;
+
     int maxTasks = data.values.isEmpty
         ? 1
         : data.values.reduce((a, b) => a > b ? a : b);
 
-    String latestDate = dates.isNotEmpty ? dates.last : "";
+    String latestDate = recentDates.isNotEmpty ? recentDates.last : "";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +112,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: dates.map((date) {
+          children: recentDates.map((date) {
             final count = data[date]!;
 
             double barHeight = (count / maxTasks) * 100;
@@ -256,184 +241,186 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
             )
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //AI-insights
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "AI Insights 🤖",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    //AI-insights
+                    InfoCard(
+                      title: "AI Insights 🤖",
+                      child: Column(
+                        children: insights
+                            .map(
+                              (text) => Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.orange
+                                      : Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(text),
+                              ),
+                            )
+                            .toList(),
                       ),
-                      SizedBox(height: 10),
+                    ),
+                    buildChart(),
 
-                      ...insights.map(
-                        (text) => Container(
-                          margin: EdgeInsets.only(bottom: 8),
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? Colors.orange
-                                : Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            text,
+                    const SizedBox(height: 24),
+
+                    //productivity score card
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "📈 Productivity Score",
                             style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.color,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          ProgressCard(
+                            title: "Completion Rate",
+                            progress: getCompletionRate(),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          Text(
+                            "${(getCompletionRate() * 100).toInt()}% Completion Rate",
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // analytics section
+                    const Text(
+                      "📊 Performance Overview",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    //chart
+                    Row(
+                      children: [
+                        Expanded(
+                          child: StatCard(
+                            title: "Total Tasks",
+                            value: analytics["totalTasks"].toString(),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: StatCard(
+                              title: "Days Active",
+                              value: analytics["totalDays"].toString(),
                             ),
                           ),
                         ),
-                      ),
-
-                      SizedBox(height: 20),
-                    ],
-                  ),
-                  buildChart(),
-
-                  //productivity score card
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "📈 Productivity Score",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        LinearProgressIndicator(
-                          value: getCompletionRate(),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          "${(getCompletionRate() * 100).toInt()}% Completion Rate",
-                        ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: 20),
-
-                  // analytics section
-                  const Text(
-                    "📊 Performance Overview",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-
-                  //chart
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          "Total Tasks",
-                          analytics["totalTasks"].toString(),
-                        ),
+                    SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: StatCard(
+                        title: "Best Day",
+                        value:
+                            "${analytics["bestDay"]} (${analytics["bestDayCount"]} tasks)",
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: _buildStatCard(
-                            "Days Active",
-                            analytics["totalDays"].toString(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _buildStatCard(
-                      "Best Day",
-                      "${analytics["bestDay"]} (${analytics["bestDayCount"]} tasks)",
                     ),
-                  ),
 
-                  SizedBox(height: 20),
+                    SizedBox(height: 20),
 
-                  // history list scrollable
-                  Expanded(
-                    child: ListView.builder(
+                    //history
+                    SectionTitle(title: "📚 History Timeline"),
+
+                    const SizedBox(height: 20),
+
+                    // history list scrollable
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: dates.length,
                       itemBuilder: (context, index) {
                         final date = dates[index];
                         final tasks = history[date]!;
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // date
-                              Text(
-                                date,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              // tasks
-                              ...tasks.map(
-                                (task) => Row(
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ModernCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // date
+                                Row(
                                   children: [
-                                    Container(
-                                      width: 22,
-                                      height: 22,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.green,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 14,
+                                    const Icon(Icons.calendar_today, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      date,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(child: Text(task)),
                                   ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 10),
+
+                                // tasks
+                                ...tasks.map(
+                                  (task) => Row(
+                                    children: [
+                                      Container(
+                                        width: 22,
+                                        height: 22,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Text(task)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

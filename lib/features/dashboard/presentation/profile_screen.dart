@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/custom_app_bar.dart';
+import '../../../core/widgets/info_card.dart';
 import 'history_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -108,41 +109,9 @@ class ProfileScreen extends StatelessWidget {
 
               //consistency card
               const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.trending_up),
-                        SizedBox(width: 8),
-                        Text(
-                          "Consistency Status",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      getConsistencyText(),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+              InfoCard(
+                title: "Consistency Status",
+                child: Text(getConsistencyText()),
               ),
 
               // resume

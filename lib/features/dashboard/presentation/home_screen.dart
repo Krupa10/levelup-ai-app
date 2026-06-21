@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/widgets/custom_app_bar.dart';
+import '../../../core/widgets/progress_card.dart';
 import '../../../services/notification_service.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -181,37 +182,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SectionTitle(title: "🎯 Current Goal"),
+
                     SizedBox(height: AppSpacing.md),
 
-                    SectionTitle(
-                      title: currentGoal.isEmpty
-                          ? "No goal set yet"
+                    Text(
+                      currentGoal.isEmpty
+                          ? "Set a goal to begin tracking progress 🚀"
                           : currentGoal,
-                    ),
-                    SizedBox(height: AppSpacing.md),
-
-                    LinearProgressIndicator(
-                      value: calculateGoalProgress(),
-                      borderRadius: BorderRadius.circular(10),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
 
                     SizedBox(height: AppSpacing.md),
-                    SectionTitle(
-                      title: currentGoal.isEmpty
-                          ? "Set a goal to start tracking"
-                          : "${(calculateGoalProgress() * 100).toInt()}% Completed",
+
+                    ProgressCard(
+                      title: "Goal Progress",
+                      progress: calculateGoalProgress(),
                     ),
                   ],
                 ),
               ),
 
-              LinearProgressIndicator(
-                value: getProgress(),
-                backgroundColor: Colors.grey.shade300,
-                valueColor: AlwaysStoppedAnimation(
-                  Theme.of(context).colorScheme.primary,
-                ),
-              ),
               const SizedBox(height: AppSpacing.lg),
 
               // goal input
