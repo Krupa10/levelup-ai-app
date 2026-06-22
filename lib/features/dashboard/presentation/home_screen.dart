@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:flutter/services.dart';
 import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/progress_card.dart';
 import '../../../services/notification_service.dart';
@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int streak = 0;
   bool todayCompleted = false;
+  bool isGeneratingPlan = false;
   String currentGoal = "";
   List<Map<String, dynamic>> get todayPlan => widget.tasks;
 
@@ -56,6 +57,18 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
     } else if (goal.contains("job")) {
       tasks = ["Apply to 5 companies", "Improve resume", "Practice DSA"];
+    } else if (goal.contains("dsa")) {
+      tasks = [
+        "Solve 3 Easy problems",
+        "Solve 2 Medium problems",
+        "Revise one DSA topic",
+      ];
+    } else if (goal.contains("ai")) {
+      tasks = [
+        "Learn one AI concept",
+        "Build mini AI feature",
+        "Read AI industry news",
+      ];
     } else {
       tasks = ["Work on your project", "Learn new concept", "Stay consistent"];
     }
@@ -90,6 +103,22 @@ class _HomeScreenState extends State<HomeScreen> {
     return completed / todayPlan.length;
   }
 
+  //save goal
+  Future<void> saveGoal() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString("current_goal", currentGoal);
+  }
+
+  //load goal
+  Future<void> loadGoal() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      currentGoal = prefs.getString("current_goal") ?? "";
+    });
+  }
+
   //save history
   Future<void> saveHistory() async {
     final prefs = await SharedPreferences.getInstance();
@@ -112,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (pickedTime == null) return;
+    HapticFeedback.lightImpact();
 
     // Smart reminder validation
     if (pickedTime.hour < 6 || pickedTime.hour > 23) {
@@ -145,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     loadStreak();
+    loadGoal();
   }
 
   // progress
@@ -221,8 +252,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 child: CustomButton(
                   text: "Generate Plan",
-                  onPressed: () {
+                  isLoading: isGeneratingPlan,
+
+                  onPressed: () async {
                     if (goalController.text.trim().isEmpty) return;
+
+                    setState(() {
+                      isGeneratingPlan = true;
+                    });
+
+                    await Future.delayed(const Duration(milliseconds: 800));
 
                     setState(() {
                       currentGoal = goalController.text;
@@ -230,11 +269,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       widget.onTasksUpdated(generatePlan(currentGoal));
 
                       todayCompleted = false;
+
+                      isGeneratingPlan = false;
                     });
+                    FocusScope.of(context).unfocus();
                     goalController.clear();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Plan generated successfully 🚀"),
+                      ),
+                    );
                   },
                 ),
               ),
+
               const SizedBox(height: AppSpacing.lg),
 
               // plan list
@@ -255,6 +304,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           isDone: item["done"],
 
                           onTap: () {
+                            HapticFeedback.lightImpact();
+
                             final index = todayPlan.indexOf(item);
 
                             setState(() {

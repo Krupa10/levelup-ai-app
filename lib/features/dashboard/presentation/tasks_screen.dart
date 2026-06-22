@@ -59,7 +59,7 @@ class TasksScreen extends StatelessWidget {
             //Task List
             Expanded(
               child: tasks.isEmpty
-                  ? EmptyState(message: "No tasks added yet")
+                  ? EmptyState(message: "Generate a plan from Home Screen to start your day.")
                   : ListView.builder(
                       itemCount: tasks.length,
                       itemBuilder: (context, index) {

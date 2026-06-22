@@ -237,7 +237,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: const [
                   Icon(Icons.history, size: 70),
                   SizedBox(height: 12),
-                  Text("No history yet"),
+                  Text("Complete today's tasks and build your streak."),
                 ],
               ),
             )
