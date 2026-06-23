@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/info_card.dart';
+import '../../../services/resume_service.dart';
 import 'history_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final int streak;
   final bool isDarkMode;
   final Function(bool) onThemeChanged;
@@ -15,12 +16,49 @@ class ProfileScreen extends StatelessWidget {
     required this.isDarkMode,
     required this.onThemeChanged,
   });
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? resumePath;
 
   String getConsistencyText() {
-    if (streak == 0) return "Start your journey 💪";
-    if (streak < 3) return "Good start 👍";
-    if (streak < 7) return "Improving 🚀";
+    if (widget.streak == 0) {
+      return "Start your journey 💪";
+    }
+
+    if (widget.streak < 3) {
+      return "Good start 👍";
+    }
+
+    if (widget.streak < 7) {
+      return "Improving 🚀";
+    }
+
     return "On fire 🔥";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadResume();
+  }
+
+  //resume loader
+  Future<void> loadResume() async {
+    resumePath = await ResumeService.getResume();
+
+    setState(() {});
+  }
+
+  //resume name helper
+  String getResumeName() {
+    if (resumePath == null) {
+      return "";
+    }
+
+    return resumePath!.split("/").last;
   }
 
   @override
@@ -97,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      "$streak Days",
+                      "${widget.streak} Days",
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -139,12 +177,48 @@ class ProfileScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          final path = await ResumeService.pickResume();
+
+                          if (path != null) {
+                            setState(() {
+                              resumePath = path;
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Resume uploaded 🎉"),
+                              ),
+                            );
+                          }
+                        },
                         child: const Text("Upload Resume"),
                       ),
                     ),
 
                     const SizedBox(height: 10),
+
+                    //show uploaded resume
+                    if (resumePath != null) ...[
+                      const SizedBox(height: 12),
+
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.picture_as_pdf, color: Colors.red),
+
+                            const SizedBox(width: 12),
+
+                            Expanded(child: Text(getResumeName())),
+                          ],
+                        ),
+                      ),
+                    ],
 
                     //history button
                     SizedBox(
@@ -188,9 +262,9 @@ class ProfileScreen extends StatelessWidget {
                       leading: const Icon(Icons.dark_mode),
                       title: const Text("Dark Mode"),
                       trailing: Switch(
-                        value: isDarkMode,
+                        value: widget.isDarkMode,
                         onChanged: (value) {
-                          onThemeChanged(value);
+                          widget.onThemeChanged(value);
                         },
                       ),
                     ),

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/progress_card.dart';
+import '../../../services/goal_chip.dart';
 import '../../../services/notification_service.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -43,31 +44,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String reminderText = "9:00 AM";
 
+  //goal chips
+  final goalTemplates = [
+    "Flutter Job",
+    "Flutter Interview",
+    "DSA",
+    "System Design",
+    "Portfolio",
+    "AI Engineer",
+  ];
+
   // plan generator
   List<Map<String, dynamic>> generatePlan(String goal) {
     goal = goal.toLowerCase();
 
     List<String> tasks;
 
-    if (goal.contains("flutter")) {
+    if (goal.contains("flutter interview")) {
       tasks = [
-        "Revise Flutter basics",
-        "Build one UI screen",
-        "Practice interview questions",
+        "Revise Widget Lifecycle",
+        "Practice State Management",
+        "Solve Flutter Interview Questions",
       ];
-    } else if (goal.contains("job")) {
-      tasks = ["Apply to 5 companies", "Improve resume", "Practice DSA"];
+    } else if (goal.contains("flutter")) {
+      tasks = [
+        "Revise Flutter Basics",
+        "Build One UI Screen",
+        "Read Flutter Documentation",
+      ];
     } else if (goal.contains("dsa")) {
       tasks = [
-        "Solve 3 Easy problems",
-        "Solve 2 Medium problems",
-        "Revise one DSA topic",
+        "Solve 3 Array Problems",
+        "Solve 2 String Problems",
+        "Revise Time Complexity",
+      ];
+    } else if (goal.contains("system")) {
+      tasks = ["Learn Load Balancing", "Study Caching", "Design URL Shortener"];
+    } else if (goal.contains("portfolio")) {
+      tasks = [
+        "Improve Project UI",
+        "Write Project README",
+        "Add GitHub Screenshots",
       ];
     } else if (goal.contains("ai")) {
       tasks = [
-        "Learn one AI concept",
-        "Build mini AI feature",
-        "Read AI industry news",
+        "Learn Prompt Engineering",
+        "Build AI Mini Project",
+        "Read AI Agent Concepts",
       ];
     } else {
       tasks = ["Work on your project", "Learn new concept", "Stay consistent"];
@@ -235,7 +258,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: AppSpacing.lg),
 
-              // goal input
+              //goal chip
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: goalTemplates.map((goal) {
+                  return GoalChip(
+                    title: goal,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      goalController.text = goal;
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+
+              // goal input text field
               TextField(
                 controller: goalController,
                 decoration: InputDecoration(
@@ -291,47 +330,46 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionTitle(title: "Today's Plan"),
-                    const SizedBox(height: AppSpacing.md),
+                    todayPlan.isEmpty
+                        ? const Center(child: Text("No plan generated yet 🚀"))
+                        : ListView(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            children: todayPlan.map((item) {
+                              return TaskTile(
+                                title: item["task"],
 
-                    ListView(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      children: todayPlan.map((item) {
-                        return TaskTile(
-                          title: item["task"],
+                                isDone: item["done"],
 
-                          isDone: item["done"],
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
 
-                          onTap: () {
-                            HapticFeedback.lightImpact();
+                                  final index = todayPlan.indexOf(item);
 
-                            final index = todayPlan.indexOf(item);
+                                  setState(() {
+                                    widget.onTaskToggle(index);
+                                    // check if all tasks completed
+                                    bool allDoneNow = todayPlan.every(
+                                      (t) => t["done"],
+                                    );
 
-                            setState(() {
-                              widget.onTaskToggle(index);
-                              // check if all tasks completed
-                              bool allDoneNow = todayPlan.every(
-                                (t) => t["done"],
+                                    // streak update
+                                    if (allDoneNow && !todayCompleted) {
+                                      streak++;
+
+                                      todayCompleted = true;
+
+                                      saveStreak();
+
+                                      saveHistory();
+
+                                      widget.onStreakUpdated(streak);
+                                    }
+                                  });
+                                },
                               );
-
-                              // streak update
-                              if (allDoneNow && !todayCompleted) {
-                                streak++;
-
-                                todayCompleted = true;
-
-                                saveStreak();
-
-                                saveHistory();
-
-                                widget.onStreakUpdated(streak);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
+                            }).toList(),
+                          ),
                   ],
                 ),
               ),
