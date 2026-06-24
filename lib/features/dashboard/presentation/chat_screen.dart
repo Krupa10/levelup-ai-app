@@ -6,6 +6,7 @@ import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/section_title.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../data/ai_responses.dart';
 import '../../../services/ai_services.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -15,113 +16,37 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreen();
 }
 
-final List<String> prompts = [
-  "Prepare for interview",
-  "Improve my resume",
-  "Create daily plan",
+//suggestions
+final suggestions = [
+  "Flutter Interview",
+  "Resume Review",
+  "DSA Roadmap",
+  "Job Search",
+  "Flutter Learning",
+  "System Design",
 ];
 
-String getDummyResponse(String message) {
+//AI response
+String getAIResponse(String message) {
   message = message.toLowerCase();
 
-  if (message.contains("flutter")) {
-    return """
-Flutter Roadmap 🚀
-
-1. Revise Widgets
-2. Understand State Management
-3. Learn API Integration
-4. Practice Local Storage
-5. Build Projects
-6. Prepare Flutter Interview Questions
-
-Spend at least 2 hours daily.
-""";
-  }
-
-  if (message.contains("interview")) {
-    return """
-Flutter Interview Preparation 🎯
-
-• Widget Lifecycle
-• Stateless vs Stateful Widgets
-• State Management
-• Future & Async/Await
-• API Integration
-• Local Database
-• Firebase Basics
-
-Practice explaining concepts aloud.
-""";
-  }
-
-  if (message.contains("resume")) {
-    return """
-Resume Improvement Tips 📄
-
-• Add strong project descriptions
-• Mention measurable impact
-• Highlight Flutter skills
-• Add GitHub projects
-• Keep resume 1 page
-
-Your AI productivity app should be a featured project.
-""";
-  }
-
-  if (message.contains("job")) {
-    return """
-Job Search Strategy 💼
-
-• Apply daily
-• Update LinkedIn
-• Improve Resume
-• Build Portfolio Projects
-• Practice Interviews
-
-Consistency beats motivation.
-""";
-  }
-
-  if (message.contains("motivation")) {
-    return """
-Motivation Boost 🔥
-
-You don't need motivation every day.
-
-Build systems.
-Build habits.
-Take action even when you don't feel like it.
-
-Small progress daily wins.
-""";
-  }
-
-  if (message.contains("plan")) {
-    return """
-Today's Productivity Plan 📅
-
-1. Flutter Revision
-2. Project Development
-3. Interview Practice
-4. Resume Improvement
-5. Apply for Jobs
-
-Focus on completion, not perfection.
-""";
+  for (final keyword in AIResponses.responses.keys) {
+    if (message.contains(keyword)) {
+      return AIResponses.responses[keyword]!;
+    }
   }
 
   return """
 I can help with:
 
-🎯 Flutter
-💼 Jobs
-📄 Resume
-🚀 Career Growth
-🔥 Motivation
-📅 Daily Planning
+• Flutter
+• Resume
+• Interviews
+• Jobs
+• DSA
+• Career Growth
 
-Try asking one of these topics.
+Try asking a more specific question 🚀
 """;
 }
 
@@ -147,7 +72,6 @@ class _ChatScreen extends State<ChatScreen> {
     });
 
     saveChatHistory();
-    scrollToBottom();
     controller.clear();
 
     setState(() {
@@ -155,17 +79,15 @@ class _ChatScreen extends State<ChatScreen> {
     });
 
     saveChatHistory();
-    scrollToBottom();
 
     Future.delayed(const Duration(seconds: 1), () {
       setState(() {
         messages.removeLast();
 
-        messages.add({"role": "ai", "text": getDummyResponse(text)});
+        messages.add({"role": "ai", "text": getAIResponse(text)});
       });
 
       saveChatHistory();
-      scrollToBottom();
     });
   }
   /*//for ai API response
@@ -210,25 +132,6 @@ class _ChatScreen extends State<ChatScreen> {
     }
   }*/
 
-  //auto scroll to bottom
-  void scrollToBottom({bool animated = true}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-
-      final offset = _scrollController.position.maxScrollExtent;
-
-      if (animated) {
-        _scrollController.animateTo(
-          offset,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      } else {
-        _scrollController.jumpTo(offset);
-      }
-    });
-  }
-
   //save history
   Future<void> saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
@@ -252,9 +155,6 @@ class _ChatScreen extends State<ChatScreen> {
           return Map<String, String>.from(jsonDecode(msg));
         }).toList();
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToBottom(animated: false);
-      });
     }
   }
 
@@ -273,7 +173,7 @@ class _ChatScreen extends State<ChatScreen> {
                 SizedBox(height: AppSpacing.sm),
 
                 Text(
-                  "Ask me about Flutter interviews, resume improvement, daily plans, or career growth.",
+                  "I can help with Flutter, DSA, interviews,resume reviews and career planning 🚀",
                 ),
               ],
             ),
@@ -288,7 +188,7 @@ class _ChatScreen extends State<ChatScreen> {
                         Icon(Icons.smart_toy, size: 60),
                         SizedBox(height: 12),
                         Text(
-                          "Need help with interviews,resume or career growth? 🚀",
+                          "Need help with Flutter,DSA, interviews or career growth? 🚀",
                         ),
                       ],
                     ),
@@ -297,10 +197,11 @@ class _ChatScreen extends State<ChatScreen> {
               : Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
+                    reverse: true,
                     padding: const EdgeInsets.all(12),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final msg = messages[index];
+                      final msg = messages[messages.length - 1 - index];
 
                       return Align(
                         alignment: msg["role"] == "user"
@@ -340,7 +241,7 @@ class _ChatScreen extends State<ChatScreen> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: prompts.map((prompt) {
+                children: suggestions.map((prompt) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ActionChip(
