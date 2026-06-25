@@ -61,6 +61,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return resumePath!.split("/").last;
   }
 
+  //get badge
+  String getBadge() {
+    if (widget.streak >= 30) return "🥇 Gold Achiever";
+    if (widget.streak >= 7) return "🥈 Silver Consistency";
+    if (widget.streak >= 3) return "🥉 Bronze Starter";
+
+    return "🚀 Beginner";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +151,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ],
+                ),
+              ),
+
+              //achievement badge
+              const SizedBox(height: 20),
+              InfoCard(
+                title: "Achievement Badge",
+                child: Text(
+                  getBadge(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              //reward section
+              const SizedBox(height: 20),
+              InfoCard(
+                title: "Next Reward",
+                child: Text(
+                  widget.streak < 3
+                      ? "Reach 3 days for Bronze Badge 🥉"
+                      : widget.streak < 7
+                      ? "Reach 7 days for Silver Badge 🥈"
+                      : widget.streak < 30
+                      ? "Reach 30 days for Gold Badge 🥇"
+                      : "All rewards unlocked 🎉",
                 ),
               ),
 

@@ -193,6 +193,37 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  //AI coach tip
+  String getCoachTip() {
+    if (currentGoal.isEmpty) {
+      return "Set a goal and start building momentum 🚀";
+    }
+
+    final goal = currentGoal.toLowerCase();
+
+    if (goal.contains("flutter")) {
+      return "Build projects. Projects beat certificates every time 💙";
+    }
+
+    if (goal.contains("job")) {
+      return "Apply consistently. One application can change everything 💼";
+    }
+
+    if (goal.contains("interview")) {
+      return "Confidence comes from preparation, not luck 🎯";
+    }
+
+    if (goal.contains("dsa")) {
+      return "Focus on patterns, not memorizing solutions 🧠";
+    }
+
+    if (goal.contains("system")) {
+      return "Learn trade-offs, not just architecture diagrams ⚙️";
+    }
+
+    return "Stay consistent and trust the process 🚀";
+  }
+
   // init
   @override
   void initState() {
@@ -220,13 +251,31 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               // streak
               SectionTitle(title: "🔥 Streak: $streak days"),
               if (streak > 0)
                 SectionTitle(title: "Keep going! You're consistent 🚀"),
               const SizedBox(height: AppSpacing.md),
 
-              // progress
+              //AI tip card
+              ModernCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionTitle(
+                      title: "💡 AI Coach Tip",
+                    ),
+
+                    const SizedBox(height: AppSpacing.sm),
+
+                    Text(getCoachTip()),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // progress card
               SectionTitle(title: "Today's Progress"),
               const SizedBox(height: AppSpacing.xs),
 
@@ -255,7 +304,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: AppSpacing.lg),
 
               //goal chip
@@ -322,7 +370,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-
               const SizedBox(height: AppSpacing.lg),
 
               // plan list
