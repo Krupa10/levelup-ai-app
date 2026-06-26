@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/custom_app_bar.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/section_title.dart';
 import 'dart:convert';
@@ -180,19 +181,11 @@ class _ChatScreen extends State<ChatScreen> {
           ),
 
           messages.isEmpty
-              ? Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.smart_toy, size: 60),
-                        SizedBox(height: 12),
-                        Text(
-                          "Need help with Flutter,DSA, interviews or career growth? 🚀",
-                        ),
-                      ],
-                    ),
-                  ),
+              ? EmptyState(
+                  icon: Icons.chat_bubble_outline,
+                  title: "Start chatting",
+                  subtitle:
+                      "Ask me about Flutter, interviews or career planning.",
                 )
               : Expanded(
                   child: ListView.builder(

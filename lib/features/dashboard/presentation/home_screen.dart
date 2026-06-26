@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import '../../../core/widgets/custom_app_bar.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/progress_card.dart';
 import '../../../services/goal_chip.dart';
 import '../../../services/notification_service.dart';
@@ -251,7 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               // streak
               SectionTitle(title: "🔥 Streak: $streak days"),
               if (streak > 0)
@@ -263,9 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionTitle(
-                      title: "💡 AI Coach Tip",
-                    ),
+                    const SectionTitle(title: "💡 AI Coach Tip"),
 
                     const SizedBox(height: AppSpacing.sm),
 
@@ -378,7 +376,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     todayPlan.isEmpty
-                        ? const Center(child: Text("No plan generated yet 🚀"))
+                        ? EmptyState(
+                            icon: Icons.flag_outlined,
+                            title: "No Plan Generated",
+                            subtitle:
+                                "Choose a career goal above and generate your personalized learning plan.",
+                          )
                         : ListView(
                             shrinkWrap: true,
                             physics: NeverScrollableScrollPhysics(),

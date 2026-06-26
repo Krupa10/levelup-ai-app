@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/widgets/custom_app_bar.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/progress_card.dart';
@@ -231,15 +232,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       appBar: const CustomAppBar(title: "History"),
       body: history.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.history, size: 70),
-                  SizedBox(height: 12),
-                  Text("Complete today's tasks and build your streak."),
-                ],
-              ),
+          ? EmptyState(
+              icon: Icons.insights,
+              title: "No Productivity History",
+              subtitle: "Finish today's plan to build your progress history.",
             )
           : SingleChildScrollView(
               child: Padding(
