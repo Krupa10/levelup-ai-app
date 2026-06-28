@@ -209,15 +209,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 16,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-                   /* if (resumePath == null)
-                      EmptyState(
-                        icon: Icons.description_outlined,
-                        title: "No Resume Uploaded",
-                        subtitle: "Upload your resume to track and improve it.",
-                      )
-                    else*/
+
                     //upload resume button
                     SizedBox(
                       width: double.infinity,
@@ -240,13 +233,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: const Text("Upload Resume"),
                       ),
                     ),
-
                     const SizedBox(height: 10),
 
-                    //show uploaded resume
-                    if (resumePath != null) ...[
-                      const SizedBox(height: 12),
-
+                    //show uploaded resume, empty state
+                    const SizedBox(height: 12),
+                    if (resumePath == null)
+                      const EmptyState(
+                        icon: Icons.description_outlined,
+                        title: "No Resume Uploaded",
+                        subtitle: "Upload your resume to track and improve it.",
+                      )
+                    else
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -263,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
-                    ],
+                    const SizedBox(height: 12),
 
                     //history button
                     SizedBox(
@@ -286,59 +283,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // settings,dark mode
               const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Settings",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Settings",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
+                    ),
 
-                      ListTile(
-                        leading: const Icon(Icons.dark_mode),
-                        title: const Text("Dark Mode"),
-                        trailing: Switch(
-                          value: widget.isDarkMode,
-                          onChanged: (value) {
-                            widget.onThemeChanged(value);
-                          },
-                        ),
-                      ),
-                      const ListTile(
-                        leading: Icon(Icons.logout),
-                        title: Text("Logout"),
-                      ),
-
-                      //temporary debug button
-                      ListTile(
-                        leading: const Icon(Icons.delete_forever, color: Colors.red),
-                        title: const Text("Clear App Data"),
-                        subtitle: const Text("Development only"),
-                        onTap: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear();
-
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("All local data cleared"),
-                              ),
-                            );
-                          }
+                    ListTile(
+                      leading: const Icon(Icons.dark_mode),
+                      title: const Text("Dark Mode"),
+                      trailing: Switch(
+                        value: widget.isDarkMode,
+                        onChanged: (value) {
+                          widget.onThemeChanged(value);
                         },
                       ),
-                    ],
-                  ),
+                    ),
+                    const ListTile(
+                      leading: Icon(Icons.logout),
+                      title: Text("Logout"),
+                    ),
+
+                    //temporary debug button
+                    ListTile(
+                      leading: const Icon(
+                        Icons.delete_forever,
+                        color: Colors.red,
+                      ),
+                      title: const Text("Clear App Data"),
+                      subtitle: const Text("Development only"),
+                      onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.clear();
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("All local data cleared"),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),

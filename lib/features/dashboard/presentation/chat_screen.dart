@@ -180,15 +180,40 @@ class _ChatScreen extends State<ChatScreen> {
             ),
           ),
 
-          messages.isEmpty
-              ? EmptyState(
-                  icon: Icons.chat_bubble_outline,
-                  title: "Start chatting",
-                  subtitle:
-                      "Ask me about Flutter, interviews or career planning.",
-                )
-              : Expanded(
-                  child: ListView.builder(
+          //empty state, list view
+          Expanded(
+            child: messages.isEmpty
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.smart_toy_rounded,
+                        size: 70,
+                        color: Colors.deepPurple,
+                      ),
+
+                      SizedBox(height: 16),
+
+                      Text(
+                        "Need Career Advice?",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      SizedBox(height: 16),
+
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          "Ask me about Flutter,\nDSA,\nResume Reviews,\nInterviews and Career Growth 🚀",
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  )
+                : ListView.builder(
                     controller: _scrollController,
                     reverse: true,
                     padding: const EdgeInsets.all(12),
@@ -226,7 +251,7 @@ class _ChatScreen extends State<ChatScreen> {
                       );
                     },
                   ),
-                ),
+          ),
 
           //prompt chips
           Padding(

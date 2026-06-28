@@ -288,17 +288,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     Text(
                       currentGoal.isEmpty
-                          ? "Set a goal to begin tracking progress 🚀"
+                          ? "Set a goal to begin your learning journey 🚀"
                           : currentGoal,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
 
-                    SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: 12),
 
-                    ProgressCard(
-                      title: "Goal Progress",
-                      progress: calculateGoalProgress(),
-                    ),
+                    if (currentGoal.isNotEmpty)
+                      ProgressCard(
+                        title: "Goal Progress",
+                        progress: calculateGoalProgress(),
+                      ),
                   ],
                 ),
               ),
@@ -347,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     });
 
                     await Future.delayed(const Duration(milliseconds: 800));
-
+                    FocusScope.of(context).unfocus();
                     setState(() {
                       currentGoal = goalController.text;
 
@@ -361,8 +362,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     goalController.clear();
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Plan generated successfully 🚀"),
+                      SnackBar(
+                        behavior: SnackBarBehavior.floating,
+
+                        margin: EdgeInsets.all(16),
+
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+
+                        content: Text("Plan Generated 🚀"),
                       ),
                     );
                   },

@@ -20,51 +20,43 @@ class TaskTile extends StatelessWidget {
       onTap: onTap,
 
       child: AnimatedContainer(
-        duration:
-        const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 250),
 
-        margin:
-        const EdgeInsets.symmetric(
-          vertical: 6,
-        ),
+        margin: const EdgeInsets.symmetric(vertical: 6),
 
-        padding:
-        const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(14),
 
         decoration: BoxDecoration(
           color: isDone
               ? Colors.green.withOpacity(0.08)
               : Theme.of(context).cardColor,
 
-          borderRadius:
-          BorderRadius.circular(14),
-
           border: Border.all(
-            color: isDone
-                ? Colors.green
-                .withOpacity(0.3)
-                : Colors.transparent,
+            color: isDone ? Colors.green.withOpacity(.3) : Colors.transparent,
           ),
+
+          borderRadius: BorderRadius.circular(14),
+
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
 
         child: Row(
           children: [
             AnimatedSwitcher(
-              duration:
-              const Duration(
-                milliseconds: 250,
-              ),
+              duration: const Duration(milliseconds: 250),
 
               child: Icon(
-                isDone
-                    ? Icons.check_circle
-                    : Icons.circle_outlined,
+                isDone ? Icons.check_circle : Icons.circle_outlined,
 
                 key: ValueKey(isDone),
 
-                color: isDone
-                    ? Colors.green
-                    : Colors.grey,
+                color: isDone ? Colors.green : Colors.grey,
               ),
             ),
 
@@ -77,20 +69,15 @@ class TaskTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
 
-                  fontWeight:
-                  FontWeight.w500,
+                  fontWeight: FontWeight.w500,
 
                   decoration: isDone
-                      ? TextDecoration
-                      .lineThrough
+                      ? TextDecoration.lineThrough
                       : TextDecoration.none,
 
                   color: isDone
                       ? Colors.grey
-                      : Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.color,
+                      : Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
             ),
