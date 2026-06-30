@@ -64,34 +64,7 @@ class _ChatScreen extends State<ChatScreen> {
     loadChatHistory();
   }
 
-  //dummy response
-  void sendMessage(String text) {
-    if (text.trim().isEmpty) return;
-
-    setState(() {
-      messages.add({"role": "user", "text": text});
-    });
-
-    saveChatHistory();
-    controller.clear();
-
-    setState(() {
-      messages.add({"role": "ai", "text": "Typing..."});
-    });
-
-    saveChatHistory();
-
-    Future.delayed(const Duration(seconds: 1), () {
-      setState(() {
-        messages.removeLast();
-
-        messages.add({"role": "ai", "text": getAIResponse(text)});
-      });
-
-      saveChatHistory();
-    });
-  }
-  /*//for ai API response
+  //for ai API response
   void sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
@@ -108,7 +81,7 @@ class _ChatScreen extends State<ChatScreen> {
     setState(() {
       messages.add({
         "role": "ai",
-        "text": "Typing...",
+        "text": "🤖 Thinking...",
       });
     });
 
@@ -131,7 +104,7 @@ class _ChatScreen extends State<ChatScreen> {
         });
       });
     }
-  }*/
+  }
 
   //save history
   Future<void> saveChatHistory() async {

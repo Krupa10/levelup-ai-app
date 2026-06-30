@@ -1,32 +1,21 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class AIService {
-  static const String apiKey = "";
+  static final model = GenerativeModel(
+    model: "gemini-2.0-flash",
+    apiKey: dotenv.env["GEMINI_API_KEY"]!,
+  );
 
-  static Future<String> getResponse(String message) async {
-    final response = await http.post(
-      Uri.parse("https://api.openai.com/v1/responses"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $apiKey",
-      },
-      body: jsonEncode({
-        "model": "gpt-4.1-mini",
-        "input": message,
-      }),
-    );
+  static Future<String> getResponse(String prompt) async {
+    try {
+      final content = [Content.text(prompt)];
 
-    final data = jsonDecode(response.body);
-/*    print("API called with: $message");
-    print(response.body);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data["output"][0]["content"][0]["text"];
-    } else {
-      print(response.body);
-      return "Error: Unable to get response";
-    }*/
-    return data["output"][0]["content"][0]["text"];
+      final response = await model.generateContent(content);
+
+      return response.text ?? "Sorry, I couldn't generate a response.";
+    } catch (e) {
+      return "Something went wrong.\n\n$e";
+    }
   }
 }
