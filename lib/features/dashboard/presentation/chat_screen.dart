@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/ai_responses.dart';
 import '../../../services/ai_services.dart';
+import '../../../widgets/typing_indicator.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -56,6 +57,7 @@ class _ChatScreen extends State<ChatScreen> {
   TextEditingController controller = TextEditingController();
 
   final ScrollController _scrollController = ScrollController();
+  bool _isTyping = false;
 
   @override
   void initState() {
@@ -69,40 +71,33 @@ class _ChatScreen extends State<ChatScreen> {
     if (text.trim().isEmpty) return;
 
     setState(() {
-      messages.add({
-        "role": "user",
-        "text": text,
-      });
+      messages.add({"role": "user", "text": text});
+
+      _isTyping = true;
     });
 
     controller.clear();
-
-    // Show typing
-    setState(() {
-      messages.add({
-        "role": "ai",
-        "text": "🤖 Thinking...",
-      });
-    });
 
     try {
       final response = await AIService.getResponse(text);
 
       setState(() {
-        messages.removeLast();
-        messages.add({
-          "role": "ai",
-          "text": response,
-        });
+        messages.add({"role": "ai", "text": response});
       });
     } catch (e) {
       setState(() {
-        messages.removeLast();
         messages.add({
           "role": "ai",
-          "text": "Something went wrong. Try again.",
+          "text":
+              "⚠️ I couldn't connect right now. Please check your internet and try again.",
         });
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+        });
+      }
     }
   }
 
@@ -155,75 +150,91 @@ class _ChatScreen extends State<ChatScreen> {
 
           //empty state, list view
           Expanded(
-            child: messages.isEmpty
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
-                        Icons.smart_toy_rounded,
-                        size: 70,
-                        color: Colors.deepPurple,
-                      ),
-
-                      SizedBox(height: 16),
-
-                      Text(
-                        "Need Career Advice?",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      SizedBox(height: 16),
-
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          "Ask me about Flutter,\nDSA,\nResume Reviews,\nInterviews and Career Growth 🚀",
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    reverse: true,
-                    padding: const EdgeInsets.all(12),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = messages[messages.length - 1 - index];
-
-                      return Align(
-                        alignment: msg["role"] == "user"
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.75,
-                          ),
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            color: msg["role"] == "user"
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            msg["text"]!,
-                            style: TextStyle(
-                              color: msg["role"] == "user"
-                                  ? Colors.white
-                                  : Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge?.color,
+            child: Column(
+              children: [
+                Expanded(
+                  child: messages.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.smart_toy_rounded,
+                              size: 70,
+                              color: Colors.deepPurple,
                             ),
-                          ),
+
+                            SizedBox(height: 16),
+
+                            Text(
+                              "Need Career Advice?",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            SizedBox(height: 16),
+
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 32),
+                              child: Text(
+                                "Ask me about Flutter,\nDSA,\nResume Reviews,\nInterviews and Career Growth 🚀",
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
+                          padding: const EdgeInsets.all(12),
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = messages[messages.length - 1 - index];
+
+                            return Align(
+                              alignment: msg["role"] == "user"
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.75,
+                                ),
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: msg["role"] == "user"
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  msg["text"]!,
+                                  style: TextStyle(
+                                    color: msg["role"] == "user"
+                                        ? Colors.white
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                ),
+
+                if (_isTyping)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TypingIndicator(),
+                    ),
                   ),
+              ],
+            ),
           ),
 
           //prompt chips
