@@ -5,30 +5,36 @@ class AIExceptionHandler {
   static String getErrorMessage(dynamic error) {
     final errorText = error.toString().toLowerCase();
 
+    // Network
     if (errorText.contains("socketexception") ||
         errorText.contains("failed host lookup")) {
-      return "🌐 No internet connection.\n\nPlease check your connection and try again.";
+      return noInternet;
     }
 
+    // Quota
     if (errorText.contains("resource_exhausted") ||
         errorText.contains("429") ||
         errorText.contains("quota exceeded")) {
-      return "Quota Exceeded";
+      return "⚠️ Daily AI quota reached.\n\nPlease try again later.";
     }
 
+    // Invalid API Key
     if (errorText.contains("api key") ||
         errorText.contains("invalid")) {
       return "🔑 AI configuration error.\n\nPlease contact the developer.";
     }
 
-    if (errorText.contains("timeout")) {
-      return "⏳ The request took too long.\n\nPlease try again.";
-    }
-
+    // Model not found
     if (errorText.contains("not found")) {
-      return "❌ AI model not found.\n\nPlease check the configured model name.";
+      return "🤖 AI model is currently unavailable.\n\nPlease try again later.";
     }
 
-    return "Unexpected AI error:\n$error";
+    // Timeout
+    if (errorText.contains("timeout")) {
+      return "⏳ Request timed out.\n\nPlease try again.";
+    }
+
+    // Unknown error
+    return "⚠️ Something went wrong.\n\nPlease try again later.";
   }
 }
