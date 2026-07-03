@@ -1,7 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/chat_message.dart';
 
 class PromptBuilder {
-  static Future<String> buildPrompt({required String userMessage}) async {
+  static Future<String> buildPrompt({
+    required String userMessage,
+    required List<ChatMessage> chatHistory,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
 
     // Goal
@@ -17,6 +21,22 @@ class PromptBuilder {
     // Resume
     final resumePath = prefs.getString("resume_path");
     final hasResume = resumePath != null;
+
+    // Conversation history
+    final recentMessages = chatHistory.length > 10
+        ? chatHistory.sublist(chatHistory.length - 10)
+        : chatHistory;
+
+    final history = recentMessages.length > 1
+        ? recentMessages.sublist(0, recentMessages.length - 1)
+        : <ChatMessage>[];
+
+    final conversation = history.isEmpty
+        ? "No previous conversation."
+        : history.map((msg) {
+      final role = msg.role == MessageRole.user ? "User" : "AI";
+      return "$role: ${msg.text}";
+    }).join("\n");
 
     return '''
           You are LevelUp AI, a friendly and professional AI career coach.
@@ -51,8 +71,19 @@ class PromptBuilder {
           Resume Uploaded:
           ${hasResume ? "Yes" : "No"}
           
-          User Question:
+          Recent Conversation:
+          $conversation
+          
+          Current User Question:
           $userMessage
-          ''';
+          
+          Instructions:
+          - Continue the conversation naturally.
+          - Don't repeat previous answers.
+          - Use the recent conversation when relevant.
+          - If there is no previous conversation, answer normally.
+          - Be concise but helpful.
+          - End with one motivational sentence when appropriate.
+                    ''';
   }
 }

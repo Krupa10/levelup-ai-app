@@ -11,8 +11,9 @@ class AIExceptionHandler {
     }
 
     if (errorText.contains("resource_exhausted") ||
-        errorText.contains("429")) {
-      return "🤖 AI usage limit reached.\n\nPlease try again later.";
+        errorText.contains("429") ||
+        errorText.contains("quota exceeded")) {
+      return "Quota Exceeded";
     }
 
     if (errorText.contains("api key") ||
@@ -24,6 +25,10 @@ class AIExceptionHandler {
       return "⏳ The request took too long.\n\nPlease try again.";
     }
 
-    return noInternet;
+    if (errorText.contains("not found")) {
+      return "❌ AI model not found.\n\nPlease check the configured model name.";
+    }
+
+    return "Unexpected AI error:\n$error";
   }
 }

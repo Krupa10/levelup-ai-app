@@ -7,7 +7,7 @@ import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/section_title.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../data/ai_responses.dart';
+import '../../../models/chat_message.dart';
 import '../../../services/ai_services.dart';
 import '../../../widgets/typing_indicator.dart';
 
@@ -28,32 +28,8 @@ final suggestions = [
   "System Design",
 ];
 
-//AI response
-String getAIResponse(String message) {
-  message = message.toLowerCase();
-
-  for (final keyword in AIResponses.responses.keys) {
-    if (message.contains(keyword)) {
-      return AIResponses.responses[keyword]!;
-    }
-  }
-
-  return """
-I can help with:
-
-• Flutter
-• Resume
-• Interviews
-• Jobs
-• DSA
-• Career Growth
-
-Try asking a more specific question 🚀
-""";
-}
-
 class _ChatScreen extends State<ChatScreen> {
-  List<Map<String, String>> messages = [];
+  List<ChatMessage> messages = [];
   TextEditingController controller = TextEditingController();
 
   final ScrollController _scrollController = ScrollController();
@@ -71,7 +47,7 @@ class _ChatScreen extends State<ChatScreen> {
     if (text.trim().isEmpty) return;
 
     setState(() {
-      messages.add({"role": "user", "text": text});
+      messages.add(ChatMessage(role: MessageRole.user, text: text));
 
       _isTyping = true;
     });
@@ -79,18 +55,20 @@ class _ChatScreen extends State<ChatScreen> {
     controller.clear();
 
     try {
-      final response = await AIService.getResponse(text);
+      final response = await AIService.getResponse(text, messages);
 
       setState(() {
-        messages.add({"role": "ai", "text": response});
+        messages.add(ChatMessage(role: MessageRole.ai, text: response));
       });
     } catch (e) {
       setState(() {
-        messages.add({
-          "role": "ai",
-          "text":
-              "⚠️ I couldn't connect right now. Please check your internet and try again.",
-        });
+        messages.add(
+          ChatMessage(
+            role: MessageRole.ai,
+            text:
+                "⚠️ I couldn't connect right now. Please check your internet and try again.",
+          ),
+        );
       });
     } finally {
       if (mounted) {
@@ -106,7 +84,7 @@ class _ChatScreen extends State<ChatScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     List<String> encodedMessages = messages.map((msg) {
-      return jsonEncode(msg);
+      return jsonEncode(msg.toJson());
     }).toList();
 
     await prefs.setStringList("chat_history", encodedMessages);
@@ -121,7 +99,7 @@ class _ChatScreen extends State<ChatScreen> {
     if (savedMessages != null) {
       setState(() {
         messages = savedMessages.map((msg) {
-          return Map<String, String>.from(jsonDecode(msg));
+          return ChatMessage.fromJson(jsonDecode(msg));
         }).toList();
       });
     }
@@ -193,7 +171,7 @@ class _ChatScreen extends State<ChatScreen> {
                             final msg = messages[messages.length - 1 - index];
 
                             return Align(
-                              alignment: msg["role"] == "user"
+                              alignment: msg.role == MessageRole.user
                                   ? Alignment.centerRight
                                   : Alignment.centerLeft,
                               child: Container(
@@ -204,15 +182,15 @@ class _ChatScreen extends State<ChatScreen> {
                                 padding: const EdgeInsets.all(12),
                                 margin: const EdgeInsets.symmetric(vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: msg["role"] == "user"
+                                  color: msg.role == MessageRole.user
                                       ? Theme.of(context).colorScheme.primary
                                       : Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
-                                  msg["text"]!,
+                                  msg.text,
                                   style: TextStyle(
-                                    color: msg["role"] == "user"
+                                    color: msg.role == MessageRole.user
                                         ? Colors.white
                                         : Theme.of(
                                             context,
