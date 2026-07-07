@@ -4,12 +4,14 @@ class EmptyState extends StatelessWidget {
   final String title;
   final String? subtitle;
   final IconData icon;
+  final Widget? child;
 
   const EmptyState({
     super.key,
     required this.title,
     this.subtitle,
     required this.icon,
+    this.child,
   });
 
   @override
@@ -32,7 +34,6 @@ class EmptyState extends StatelessWidget {
 
             if (subtitle != null) ...[
               const SizedBox(height: 10),
-
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
@@ -41,6 +42,8 @@ class EmptyState extends StatelessWidget {
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
               ),
             ],
+
+            if (child != null) ...[const SizedBox(height: 24), child!],
           ],
         ),
       ),

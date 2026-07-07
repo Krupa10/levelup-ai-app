@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../models/chat_message.dart';
 import '../../../services/ai_services.dart';
 import '../../../widgets/typing_indicator.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:level_up_ai/utils/prompt_mapper.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -34,6 +36,7 @@ class _ChatScreen extends State<ChatScreen> {
 
   final ScrollController _scrollController = ScrollController();
   bool _isTyping = false;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -42,41 +45,113 @@ class _ChatScreen extends State<ChatScreen> {
     loadChatHistory();
   }
 
-  //for ai API response
-  void sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
+  //suggested prompts
+  final List<String> suggestedPrompts = [
+    "🚀 Create a career roadmap",
+    "🧠 Give me productivity tips",
+  ];
 
-    setState(() {
-      messages.add(ChatMessage(role: MessageRole.user, text: text));
+  //dispose method
+  @override
+  void dispose() {
+    controller.dispose();
+    _scrollController.dispose();
+    _focusNode.dispose();
 
-      _isTyping = true;
+    super.dispose();
+  }
+
+  //add AI message helper
+  void _addEmptyAiMessage() {
+    messages.add(ChatMessage(role: MessageRole.ai, text: ""));
+  }
+
+  //update last AI message helper
+  void _updateLastAiMessage(String text) {
+    messages[messages.length - 1] = ChatMessage(
+      role: MessageRole.ai,
+      text: text,
+    );
+
+    setState(() {});
+  }
+
+  //scroll to bottom helper
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (!_scrollController.hasClients) return;
+
+      _scrollController.animateTo(
+        0, // because ListView is reverse:true
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     });
+  }
+
+  //for ai API response
+  Future<void> sendMessage(String text) async {
+    if (text.trim().isEmpty) return;
 
     controller.clear();
 
+    setState(() {
+      // Add user's message
+      messages.add(ChatMessage(role: MessageRole.user, text: text));
+
+      // Show typing indicator
+      _isTyping = true;
+    });
+    _scrollToBottom();
     try {
+      // Get AI response
       final response = await AIService.getResponse(text, messages);
 
+      // Remove typing indicator and add an empty AI bubble
       setState(() {
-        messages.add(ChatMessage(role: MessageRole.ai, text: response));
+        _isTyping = false;
+
+        _addEmptyAiMessage();
       });
+      _scrollToBottom();
+
+      // Stream into that AI bubble
+      await streamResponse(response);
     } catch (e) {
       setState(() {
+        _isTyping = false;
+
         messages.add(
           ChatMessage(
             role: MessageRole.ai,
-            text:
-                "⚠️ I couldn't connect right now. Please check your internet and try again.",
+            text: "⚠️ Something went wrong.\nPlease try again.",
           ),
         );
       });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-        });
+    }
+  }
+
+  //stream response
+  Future<void> streamResponse(String response) async {
+    String current = "";
+
+    for (int i = 0; i < response.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 8));
+
+      if (!mounted) return;
+
+      current += response[i];
+
+      _updateLastAiMessage(current);
+
+      if (i % 12 == 0) {
+        _scrollToBottom();
       }
     }
+
+    _scrollToBottom();
   }
 
   //save history
@@ -132,35 +207,24 @@ class _ChatScreen extends State<ChatScreen> {
               children: [
                 Expanded(
                   child: messages.isEmpty
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.smart_toy_rounded,
-                              size: 70,
-                              color: Colors.deepPurple,
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Text(
-                              "Need Career Advice?",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            SizedBox(height: 16),
-
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 32),
-                              child: Text(
-                                "Ask me about Flutter,\nDSA,\nResume Reviews,\nInterviews and Career Growth 🚀",
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
+                      ? EmptyState(
+                          icon: Icons.smart_toy_rounded,
+                          title: "Need Career Advice?",
+                          subtitle:
+                              "Ask me anything about your career,\nlearning, interviews,\nresume, productivity or growth.",
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            alignment: WrapAlignment.center,
+                            children: suggestedPrompts.map((prompt) {
+                              return ActionChip(
+                                label: Text(prompt),
+                                onPressed: () {
+                                  sendMessage(PromptMapper.buildPrompt(prompt));
+                                },
+                              );
+                            }).toList(),
+                          ),
                         )
                       : ListView.builder(
                           controller: _scrollController,
@@ -187,14 +251,19 @@ class _ChatScreen extends State<ChatScreen> {
                                       : Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: Text(
-                                  msg.text,
-                                  style: TextStyle(
-                                    color: msg.role == MessageRole.user
-                                        ? Colors.white
-                                        : Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.color,
+                                child: MarkdownBody(
+                                  data: msg.text,
+                                  selectable: true,
+                                  styleSheet: MarkdownStyleSheet(
+                                    p: TextStyle(
+                                      color: msg.role == MessageRole.user
+                                          ? Colors.white
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.color,
+                                      fontSize: 15,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -227,7 +296,12 @@ class _ChatScreen extends State<ChatScreen> {
                     child: ActionChip(
                       label: Text(prompt),
                       onPressed: () {
-                        sendMessage(prompt);
+                        controller.text = PromptMapper.buildPrompt(prompt);
+
+                        controller.selection = TextSelection.fromPosition(
+                          TextPosition(offset: controller.text.length),
+                        );
+                        _focusNode.requestFocus();
                       },
                     ),
                   );
@@ -245,6 +319,7 @@ class _ChatScreen extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: controller,
+                    focusNode: _focusNode,
                     decoration: InputDecoration(
                       hintText: "Ask something...",
                       border: OutlineInputBorder(
