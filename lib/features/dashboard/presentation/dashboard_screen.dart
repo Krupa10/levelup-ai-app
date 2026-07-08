@@ -5,6 +5,8 @@ import 'package:level_up_ai/features/dashboard/presentation/profile_screen.dart'
 import 'package:level_up_ai/features/dashboard/presentation/tasks_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../services/memory_service.dart';
+
 class DashboardScreen extends StatefulWidget {
   final Function(bool) onThemeChanged;
   final bool isDarkMode;
@@ -22,6 +24,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int streak = 0;
   int _selectedIndex = 0;
+  String currentGoal = '';
   List<Map<String, dynamic>> tasks = [];
 
   void _onItemTapped(int index) {
@@ -43,6 +46,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await prefs.setStringList(
       "status",
       status.map((e) => e.toString()).toList(),
+    );
+    await MemoryService.updateMemory(
+      goal: currentGoal,
+      completedTasks: status.where((e) => e).length,
+      totalTasks: tasks.length,
     );
   }
 
