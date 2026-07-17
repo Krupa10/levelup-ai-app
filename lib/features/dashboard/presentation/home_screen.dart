@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:level_up_ai/features/dashboard/presentation/widgets/coach_tip_card.dart';
+import 'package:level_up_ai/features/dashboard/presentation/widgets/current_goal_card.dart';
+import 'package:level_up_ai/features/dashboard/presentation/widgets/greeting_section.dart';
+import 'package:level_up_ai/features/dashboard/presentation/widgets/reminder_card.dart';
+import 'package:level_up_ai/features/dashboard/presentation/widgets/task_plan_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import '../../../core/widgets/custom_app_bar.dart';
-import '../../../core/widgets/empty_state.dart';
-import '../../../core/widgets/progress_card.dart';
+import '../../../services/ai_services.dart';
 import '../../../services/goal_chip.dart';
 import '../../../services/notification_service.dart';
-import '../../../core/widgets/modern_card.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/section_title.dart';
-import '../../../core/widgets/task_tile.dart';
 import '../../../core/theme/app_spacing.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -38,12 +40,52 @@ class _HomeScreenState extends State<HomeScreen> {
   bool todayCompleted = false;
   bool isGeneratingPlan = false;
   String currentGoal = "";
-  List<Map<String, dynamic>> get todayPlan => widget.tasks;
+  String reminderText = "9:00 AM";
+  String coachTip =
+      "Complete one important task today before checking social media.";
+
+  List<String> goalSuggestions = [
+    "Flutter Job",
+    "Flutter Interview",
+    "DSA",
+    "System Design",
+    "Portfolio",
+    "AI Engineer",
+  ];
 
   //user selected reminder time
   TimeOfDay selectedReminderTime = const TimeOfDay(hour: 9, minute: 0);
 
-  String reminderText = "9:00 AM";
+  //helper method
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning ☀️';
+    } else if (hour < 17) {
+      return 'Good Afternoon 🌤️';
+    } else {
+      return 'Good Evening 🌙';
+    }
+  }
+
+  String getMotivation() {
+    if (currentGoal.isEmpty) {
+      return 'Set a goal and let LevelUp AI guide your journey.';
+    }
+    final completed = widget.tasks.where((t) => t['done'] == true).length;
+    final total = widget.tasks.length;
+    if (total == 0) {
+      return 'Start by creating your first task.';
+    }
+    final progress = ((completed / total) * 100).round();
+    if (progress >= 80) {
+      return 'You are almost there! Finish strong. 🚀';
+    } else if (progress >= 50) {
+      return 'Great progress! Keep the momentum going. 💪';
+    } else {
+      return 'Small consistent steps lead to big results. 🌱';
+    }
+  }
 
   //goal chips
   final goalTemplates = [
@@ -55,51 +97,52 @@ class _HomeScreenState extends State<HomeScreen> {
     "AI Engineer",
   ];
 
-  // plan generator
-  List<Map<String, dynamic>> generatePlan(String goal) {
-    goal = goal.toLowerCase();
+  //load goal suggestion
+  Future<void> loadGoalSuggestions() async {
+    if (currentGoal.trim().isEmpty) return;
 
-    List<String> tasks;
+    try {
+      final suggestions = await AIService.generateGoalSuggestions(currentGoal);
 
-    if (goal.contains("flutter interview")) {
-      tasks = [
-        "Revise Widget Lifecycle",
-        "Practice State Management",
-        "Solve Flutter Interview Questions",
-      ];
-    } else if (goal.contains("flutter")) {
-      tasks = [
-        "Revise Flutter Basics",
-        "Build One UI Screen",
-        "Read Flutter Documentation",
-      ];
-    } else if (goal.contains("dsa")) {
-      tasks = [
-        "Solve 3 Array Problems",
-        "Solve 2 String Problems",
-        "Revise Time Complexity",
-      ];
-    } else if (goal.contains("system")) {
-      tasks = ["Learn Load Balancing", "Study Caching", "Design URL Shortener"];
-    } else if (goal.contains("portfolio")) {
-      tasks = [
-        "Improve Project UI",
-        "Write Project README",
-        "Add GitHub Screenshots",
-      ];
-    } else if (goal.contains("ai")) {
-      tasks = [
-        "Learn Prompt Engineering",
-        "Build AI Mini Project",
-        "Read AI Agent Concepts",
-      ];
-    } else {
-      tasks = ["Work on your project", "Learn new concept", "Stay consistent"];
+      if (!mounted) return;
+
+      setState(() {
+        goalSuggestions = suggestions;
+      });
+    } catch (e) {
+      debugPrint("Goal suggestion error: $e");
     }
+  }
 
-    return tasks.map((task) {
-      return {"task": task, "done": false};
-    }).toList();
+  //load coach tip
+  Future<void> loadCoachTip() async {
+    if (currentGoal.isEmpty) return;
+
+    try {
+      final completed = widget.tasks.where((t) => t["done"] == true).length;
+
+      final tip = await AIService.generateCoachTip(
+        goal: currentGoal,
+        completed: completed,
+        total: widget.tasks.length,
+        streak: streak,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        coachTip = tip;
+      });
+    } catch (e) {
+      debugPrint("Coach Tip Error: $e");
+    }
+  }
+
+  // plan generator
+  Future<List<Map<String, dynamic>>> generatePlan(String goal) async {
+    final generatedTasks = await AIService.generatePlan(goal);
+
+    return generatedTasks.map((task) => {"task": task, "done": false}).toList();
   }
 
   // storage
@@ -120,11 +163,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   //calculate goal progress
   double calculateGoalProgress() {
-    if (todayPlan.isEmpty) return 0;
+    if (widget.tasks.isEmpty) return 0;
 
-    int completed = todayPlan.where((task) => task["done"]).length;
+    final completed = widget.tasks.where((task) => task["done"] == true).length;
 
-    return completed / todayPlan.length;
+    return completed / widget.tasks.length;
   }
 
   //save goal
@@ -149,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     String today = DateTime.now().toString().split(' ')[0];
 
-    List<String> completedTasks = todayPlan
+    List<String> completedTasks = widget.tasks
         .where((t) => t["done"])
         .map((t) => t["task"] as String)
         .toList();
@@ -194,50 +237,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  //AI coach tip
-  String getCoachTip() {
-    if (currentGoal.isEmpty) {
-      return "Set a goal and start building momentum 🚀";
-    }
-
-    final goal = currentGoal.toLowerCase();
-
-    if (goal.contains("flutter")) {
-      return "Build projects. Projects beat certificates every time 💙";
-    }
-
-    if (goal.contains("job")) {
-      return "Apply consistently. One application can change everything 💼";
-    }
-
-    if (goal.contains("interview")) {
-      return "Confidence comes from preparation, not luck 🎯";
-    }
-
-    if (goal.contains("dsa")) {
-      return "Focus on patterns, not memorizing solutions 🧠";
-    }
-
-    if (goal.contains("system")) {
-      return "Learn trade-offs, not just architecture diagrams ⚙️";
-    }
-
-    return "Stay consistent and trust the process 🚀";
-  }
-
   // init
   @override
   void initState() {
     super.initState();
     loadStreak();
     loadGoal();
-  }
-
-  // progress
-  double getProgress() {
-    if (todayPlan.isEmpty) return 0;
-
-    return todayPlan.where((t) => t["done"]).length / todayPlan.length;
   }
 
   // UI
@@ -252,64 +257,34 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              //motivation card
+              GreetingSection(
+                greeting: getGreeting(),
+                motivation: getMotivation(),
+              ),
+              const SizedBox(height: 20),
+
+              //coach tip
+              CoachTipCard(coachTip: coachTip),
+              const SizedBox(height: 16),
+
               // streak
               SectionTitle(title: "🔥 Streak: $streak days"),
               if (streak > 0)
                 SectionTitle(title: "Keep going! You're consistent 🚀"),
               const SizedBox(height: AppSpacing.md),
 
-              //AI tip card
-              ModernCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionTitle(title: "💡 AI Coach Tip"),
-
-                    const SizedBox(height: AppSpacing.sm),
-
-                    Text(getCoachTip()),
-                  ],
-                ),
+              // current goal, progress card
+              CurrentGoalCard(
+                goal: currentGoal,
+                progress: calculateGoalProgress(),
               ),
-              const SizedBox(height: AppSpacing.md),
-
-              // progress card
-              SectionTitle(title: "Today's Progress"),
-              const SizedBox(height: AppSpacing.xs),
-
-              //calculated progress
-              ModernCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionTitle(title: "🎯 Current Goal"),
-
-                    SizedBox(height: AppSpacing.md),
-
-                    Text(
-                      currentGoal.isEmpty
-                          ? "Set a goal to begin your learning journey 🚀"
-                          : currentGoal,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    if (currentGoal.isNotEmpty)
-                      ProgressCard(
-                        title: "Goal Progress",
-                        progress: calculateGoalProgress(),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
 
               //goal chip
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: goalTemplates.map((goal) {
+                children: goalSuggestions.map((goal) {
                   return GoalChip(
                     title: goal,
                     onTap: () {
@@ -343,35 +318,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () async {
                     if (goalController.text.trim().isEmpty) return;
 
+                    FocusScope.of(context).unfocus();
+
                     setState(() {
                       isGeneratingPlan = true;
                     });
 
-                    await Future.delayed(const Duration(milliseconds: 800));
-                    FocusScope.of(context).unfocus();
-                    setState(() {
-                      currentGoal = goalController.text;
+                    currentGoal = goalController.text;
 
-                      widget.onTasksUpdated(generatePlan(currentGoal));
+                    final newTasks = await generatePlan(currentGoal);
 
-                      todayCompleted = false;
+                    widget.onTasksUpdated(newTasks);
 
-                      isGeneratingPlan = false;
-                    });
-                    FocusScope.of(context).unfocus();
+                    await loadGoalSuggestions();
+
+                    await loadCoachTip();
+
+                    await saveGoal();
+
                     goalController.clear();
 
+                    if (!mounted) return;
+
+                    setState(() {
+                      todayCompleted = false;
+                      isGeneratingPlan = false;
+                    });
+
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-
-                        margin: EdgeInsets.all(16),
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-
+                      const SnackBar(
                         content: Text("Plan Generated 🚀"),
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
@@ -380,79 +357,36 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: AppSpacing.lg),
 
               // plan list
-              ModernCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    todayPlan.isEmpty
-                        ? EmptyState(
-                            icon: Icons.flag_outlined,
-                            title: "No Plan Generated",
-                            subtitle:
-                                "Choose a career goal above and generate your personalized learning plan.",
-                          )
-                        : ListView(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            children: todayPlan.map((item) {
-                              return TaskTile(
-                                title: item["task"],
+              TaskPlanCard(
+                tasks: widget.tasks,
+                onTaskTap: (index) {
+                  setState(() {
+                    widget.onTaskToggle(index);
 
-                                isDone: item["done"],
+                    final allDoneNow = widget.tasks.every(
+                      (task) => task["done"],
+                    );
 
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
+                    if (allDoneNow && !todayCompleted) {
+                      streak++;
 
-                                  final index = todayPlan.indexOf(item);
+                      todayCompleted = true;
 
-                                  setState(() {
-                                    widget.onTaskToggle(index);
-                                    // check if all tasks completed
-                                    bool allDoneNow = todayPlan.every(
-                                      (t) => t["done"],
-                                    );
+                      saveStreak();
 
-                                    // streak update
-                                    if (allDoneNow && !todayCompleted) {
-                                      streak++;
+                      saveHistory();
 
-                                      todayCompleted = true;
-
-                                      saveStreak();
-
-                                      saveHistory();
-
-                                      widget.onStreakUpdated(streak);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          ),
-                  ],
-                ),
+                      widget.onStreakUpdated(streak);
+                    }
+                  });
+                },
               ),
 
               //reminder UI card
               const SizedBox(height: AppSpacing.md),
-              ModernCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionTitle(title: "🔔 Daily Reminder"),
-
-                    const SizedBox(height: AppSpacing.md),
-
-                    SectionTitle(title: "Reminder Time: $reminderText"),
-
-                    const SizedBox(height: AppSpacing.md),
-
-                    CustomButton(
-                      text: "Change Reminder Time",
-                      onPressed: pickReminderTime,
-                    ),
-                  ],
-                ),
+              ReminderCard(
+                reminderText: reminderText,
+                onPressed: pickReminderTime,
               ),
 
               /*  //notification button
