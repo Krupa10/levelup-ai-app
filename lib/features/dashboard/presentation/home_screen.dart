@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:level_up_ai/features/dashboard/presentation/widgets/achievement_dialog.dart';
 import 'package:level_up_ai/features/dashboard/presentation/widgets/coach_tip_card.dart';
 import 'package:level_up_ai/features/dashboard/presentation/widgets/current_goal_card.dart';
 import 'package:level_up_ai/features/dashboard/presentation/widgets/greeting_section.dart';
@@ -87,31 +88,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  //goal chips
-  final goalTemplates = [
-    "Flutter Job",
-    "Flutter Interview",
-    "DSA",
-    "System Design",
-    "Portfolio",
-    "AI Engineer",
-  ];
-
   //load goal suggestion
   Future<void> loadGoalSuggestions() async {
     if (currentGoal.trim().isEmpty) return;
+    final suggestions = await AIService.generateGoalSuggestions(currentGoal);
 
-    try {
-      final suggestions = await AIService.generateGoalSuggestions(currentGoal);
+    await saveGoalSuggestions(suggestions);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      setState(() {
-        goalSuggestions = suggestions;
-      });
-    } catch (e) {
-      debugPrint("Goal suggestion error: $e");
-    }
+    setState(() {
+      goalSuggestions = suggestions;
+    });
   }
 
   //load coach tip
@@ -177,12 +165,58 @@ class _HomeScreenState extends State<HomeScreen> {
     await prefs.setString("current_goal", currentGoal);
   }
 
+  //save goal suggestions
+  Future<void> saveGoalSuggestions(List<String> suggestions) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setStringList(
+      "goal_suggestions",
+      suggestions,
+    );
+
+    await prefs.setString(
+      "goal_suggestions_for",
+      currentGoal,
+    );
+  }
+
+  //load saved goal suggestions
+  Future<void> loadSavedGoalSuggestions() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedSuggestions =
+    prefs.getStringList("goal_suggestions");
+
+    if (savedSuggestions == null || savedSuggestions.isEmpty) return;
+
+    if (!mounted) return;
+
+    setState(() {
+      goalSuggestions = savedSuggestions;
+    });
+  }
+
   //load goal
   Future<void> loadGoal() async {
     final prefs = await SharedPreferences.getInstance();
 
+    final savedGoal = prefs.getString("current_goal") ?? "";
+    final cachedGoal =
+        prefs.getString("goal_suggestions_for") ?? "";
+
+    List<String> suggestions = goalSuggestions;
+
+    if (savedGoal.isNotEmpty) {
+      suggestions = await AIService.generateGoalSuggestions(savedGoal);
+    }
+
     setState(() {
-      currentGoal = prefs.getString("current_goal") ?? "";
+      currentGoal = savedGoal;
+
+      if (savedGoal.isNotEmpty &&
+          cachedGoal != savedGoal) {
+        loadGoalSuggestions();
+      }
     });
   }
 
@@ -242,6 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     loadStreak();
+    loadSavedGoalSuggestions();
     loadGoal();
   }
 
@@ -377,6 +412,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       saveHistory();
 
                       widget.onStreakUpdated(streak);
+                      //achievement dialog
+                      showDialog(
+                        context: context,
+                        builder: (_) => AchievementDialog(
+                          streak: streak,
+                        ),
+                      );
                     }
                   });
                 },
