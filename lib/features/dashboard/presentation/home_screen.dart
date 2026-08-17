@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import '../../../core/widgets/custom_app_bar.dart';
 import '../../../services/ai_services.dart';
+import '../../../services/daily_coach_service.dart';
 import '../../../services/goal_chip.dart';
 import '../../../services/notification_service.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -44,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String reminderText = "9:00 AM";
   String coachTip =
       "Complete one important task today before checking social media.";
+  String dailyCoachMessage =
+      "Focus on one important task today and keep your momentum going. 🚀";
+
+  bool isLoadingDailyCoach = false;
 
   List<String> goalSuggestions = [
     "Flutter Job",
@@ -126,6 +131,90 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  //load daily coach
+  Future<void> loadDailyCoach() async {
+    // First check if today's coach already exists.
+    final cachedCoach = await DailyCoachService.getCachedDailyCoach();
+
+    if (!mounted) return;
+
+    // Today's coach exists.
+    // Show it immediately and don't call Gemini again.
+    if (cachedCoach != null && cachedCoach.isNotEmpty) {
+      setState(() {
+        dailyCoachMessage = cachedCoach;
+      });
+
+      return;
+    }
+
+    // No goal means there is nothing useful to generate.
+    if (currentGoal.trim().isEmpty) {
+      setState(() {
+        dailyCoachMessage = DailyCoachService.fallbackMessage;
+      });
+
+      return;
+    }
+
+    // Get the previous day's coach.
+    // This will be our temporary/offline fallback.
+    final previousCoach = await DailyCoachService.getLastCachedDailyCoach();
+
+    if (!mounted) return;
+
+    // Show previous coach immediately if available.
+    if (previousCoach != null && previousCoach.isNotEmpty) {
+      setState(() {
+        dailyCoachMessage = previousCoach;
+      });
+    } else {
+      // No previous coach exists.
+      setState(() {
+        dailyCoachMessage = DailyCoachService.fallbackMessage;
+      });
+    }
+
+    // Now try to generate today's fresh coach.
+    setState(() {
+      isLoadingDailyCoach = true;
+    });
+
+    try {
+      final completedTasks = widget.tasks
+          .where((task) => task["done"] == true)
+          .length;
+
+      final totalTasks = widget.tasks.length;
+
+      final message = await DailyCoachService.generateDailyCoach(
+        goal: currentGoal,
+        completedTasks: completedTasks,
+        totalTasks: totalTasks,
+        streak: streak,
+      );
+
+      if (!mounted) return;
+
+      // Gemini succeeded.
+      // Replace previous/fallback message with today's message.
+      setState(() {
+        dailyCoachMessage = message;
+      });
+    } catch (e) {
+      debugPrint("Daily coach error: $e");
+
+      // Gemini failed.
+      // Keep the previous coach or fallback message already displayed.
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingDailyCoach = false;
+        });
+      }
+    }
+  }
+
   // plan generator
   Future<List<Map<String, dynamic>>> generatePlan(String goal) async {
     final generatedTasks = await AIService.generatePlan(goal);
@@ -169,23 +258,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> saveGoalSuggestions(List<String> suggestions) async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setStringList(
-      "goal_suggestions",
-      suggestions,
-    );
+    await prefs.setStringList("goal_suggestions", suggestions);
 
-    await prefs.setString(
-      "goal_suggestions_for",
-      currentGoal,
-    );
+    await prefs.setString("goal_suggestions_for", currentGoal);
   }
 
   //load saved goal suggestions
   Future<void> loadSavedGoalSuggestions() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final savedSuggestions =
-    prefs.getStringList("goal_suggestions");
+    final savedSuggestions = prefs.getStringList("goal_suggestions");
 
     if (savedSuggestions == null || savedSuggestions.isEmpty) return;
 
@@ -201,8 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     final savedGoal = prefs.getString("current_goal") ?? "";
-    final cachedGoal =
-        prefs.getString("goal_suggestions_for") ?? "";
+    final cachedGoal = prefs.getString("goal_suggestions_for") ?? "";
 
     List<String> suggestions = goalSuggestions;
 
@@ -213,8 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       currentGoal = savedGoal;
 
-      if (savedGoal.isNotEmpty &&
-          cachedGoal != savedGoal) {
+      if (savedGoal.isNotEmpty && cachedGoal != savedGoal) {
         loadGoalSuggestions();
       }
     });
@@ -275,9 +355,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    loadStreak();
-    loadSavedGoalSuggestions();
-    loadGoal();
+
+    initializeHome();
+  }
+
+  Future<void> initializeHome() async {
+    await loadStreak();
+
+    await loadGoal();
+
+    // Load today's coach first.
+    // If cached, it can appear immediately.
+    await loadDailyCoach();
+
+    // Load suggestions after the coach.
+    await loadSavedGoalSuggestions();
   }
 
   // UI
@@ -300,7 +392,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
 
               //coach tip
-              CoachTipCard(coachTip: coachTip),
+              CoachTipCard(
+                message: dailyCoachMessage,
+                isLoading: isLoadingDailyCoach,
+              ),
               const SizedBox(height: 16),
 
               // streak
@@ -359,17 +454,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       isGeneratingPlan = true;
                     });
 
-                    currentGoal = goalController.text;
+                    currentGoal = goalController.text.trim();
 
+                    // Generate the new learning plan.
                     final newTasks = await generatePlan(currentGoal);
 
                     widget.onTasksUpdated(newTasks);
 
+                    // The old Daily Coach belongs to the previous plan.
+                    // Clear it so Gemini generates a fresh coach.
+                    await DailyCoachService.clearDailyCoach();
+
+                    // Save the new goal.
+                    await saveGoal();
+
+                    // Generate fresh goal suggestions.
                     await loadGoalSuggestions();
 
-                    await loadCoachTip();
-
-                    await saveGoal();
+                    // Generate a fresh Daily AI Coach for the new plan.
+                    await loadDailyCoach();
 
                     goalController.clear();
 
@@ -415,9 +518,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       //achievement dialog
                       showDialog(
                         context: context,
-                        builder: (_) => AchievementDialog(
-                          streak: streak,
-                        ),
+                        builder: (_) => AchievementDialog(streak: streak),
                       );
                     }
                   });
